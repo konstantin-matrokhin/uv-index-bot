@@ -1,4 +1,4 @@
-package com.kmatrokhin.uvbot;
+package com.kmatrokhin.uvbot.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

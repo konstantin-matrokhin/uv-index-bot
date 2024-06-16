@@ -1,0 +1,15 @@
+spring:
+  application.name: uv-index-bot
+  datasource:
+    url: jdbc:postgresql://localhost:5432/uvbot
+    username: postgres
+    password: UvBotPassword6969!
+    hikari:
+      schema: public
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  liquibase:
+    change-log: classpath:/db/changelog-master.xml
+    default-schema: public
+    enabled: true
