@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
+import java.net.http.HttpClient;
+
 @Configuration
 public class TelegramBeanConfig {
     @Bean
@@ -21,5 +23,10 @@ public class TelegramBeanConfig {
     @Bean
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
+    }
+
+    @Bean
+    public HttpClient httpClient() {
+        return HttpClient.newHttpClient();
     }
 }

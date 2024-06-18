@@ -1,5 +1,6 @@
 package com.kmatrokhin.uvbot.services;
 
+import com.kmatrokhin.uvbot.dto.Coordinates;
 import com.kmatrokhin.uvbot.entities.LocationEntity;
 import com.kmatrokhin.uvbot.entities.UserEntity;
 import com.kmatrokhin.uvbot.repositories.LocationRepository;
@@ -17,7 +18,7 @@ public class UserService {
     private final LocationRepository locationRepository;
 
     @Transactional
-    public void signUp(Long chatId, Double lat, Double lng) {
+    public void signUp(Long chatId, Coordinates coordinates) {
         UserEntity userEntity = userRepository.findByChatId(chatId).orElse(new UserEntity()
             .setId(UUID.randomUUID())
             .setChatId(chatId));
@@ -26,8 +27,8 @@ public class UserService {
                 .setUserEntity(userEntity)
             )
             .setName("Unknown")
-            .setLatitude(lat.floatValue())
-            .setLongitude(lng.floatValue());
+            .setLatitude(coordinates.getLatitude().floatValue())
+            .setLongitude(coordinates.getLongitude().floatValue());
         userRepository.save(userEntity);
         locationRepository.save(locationEntity);
     }

@@ -1,7 +1,9 @@
 package com.kmatrokhin.uvbot.telegram;
 
+import com.kmatrokhin.uvbot.dto.Coordinates;
+import com.kmatrokhin.uvbot.repositories.UserRepository;
+import com.kmatrokhin.uvbot.services.LocationInfoService;
 import com.kmatrokhin.uvbot.services.UserService;
-import com.kmatrokhin.uvbot.services.UvIndexService;
 import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsume
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Location;
+import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -21,20 +24,20 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
-import java.util.List;
-
 import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.getChatId;
 
 @Service
 @Slf4j
 public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
-    private final UvIndexService uvIndexService;
     private final UserService userService;
+    private final LocationInfoService locationInfoService;
+    private final UserRepository userRepository;
 
-    public UvIndexAbility(TelegramClient telegramClient, UvIndexService uvIndexService, UserService userService) {
+    public UvIndexAbility(TelegramClient telegramClient, UserService userService, LocationInfoService locationInfoService, UserRepository userRepository) {
         super(telegramClient, "uv_advisor_bot", MapDBContext.onlineInstance("uv_bot.db"));
-        this.uvIndexService = uvIndexService;
         this.userService = userService;
+        this.locationInfoService = locationInfoService;
+        this.userRepository = userRepository;
     }
 
     @PostConstruct
@@ -43,36 +46,66 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
         super.onRegister();
     }
 
-    public Ability ability() {
+    public Ability start() {
         return Ability.builder()
             .name("start")
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
-            .action(messageContext -> showMenu(messageContext.chatId()))
+            .action(context -> {
+                if (userRepository.findByChatId(context.chatId()).isEmpty()) {
+                    sendInitMessage(context.update());
+                } else {
+                    showMainMenu(context.update());
+                }
+            })
             .build();
     }
 
-    public void showMenu(Long chatId) {
-        silent.execute(SendMessage.builder()
-            .replyMarkup(ReplyKeyboardMarkup.builder()
-                .keyboard(List.of(
-                    new KeyboardRow(
+    public void sendInitMessage(Update update) {
+        silent.execute(
+            SendMessage.builder()
+                .replyMarkup(ReplyKeyboardMarkup.builder()
+                    .keyboardRow(new KeyboardRow(
                         locationButton()
                     ))
+                    .oneTimeKeyboard(false)
+                    .resizeKeyboard(true)
+                    .build()
                 )
-                .oneTimeKeyboard(false)
-                .resizeKeyboard(true)
+                .text("Please send your location")
+                .chatId(getChatId(update))
                 .build()
-            )
-            .text("Main menu")
-            .chatId(chatId)
-            .build());
+        );
+    }
+
+    public void showMainMenu(Update update) {
+        silent.execute(
+            SendMessage.builder()
+                .replyMarkup(ReplyKeyboardMarkup.builder()
+                    .keyboardRow(new KeyboardRow(
+                        locationButton(),
+                        manageSubscription()
+                    ))
+                    .oneTimeKeyboard(false)
+                    .resizeKeyboard(true)
+                    .build()
+                )
+                .text("Welcome back!")
+                .chatId(getChatId(update))
+                .build()
+        );
+    }
+
+    private KeyboardButton manageSubscription() {
+        return KeyboardButton.builder()
+            .text("⚙️ Manage my subscription")
+            .build();
     }
 
     public KeyboardButton locationButton() {
         return KeyboardButton.builder()
             .requestLocation(true)
-            .text("Send new location")
+            .text("📍 Send new location")
             .build();
     }
 
@@ -83,14 +116,12 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             .build();
     }
 
-    public ReplyFlow subscribeReply() {
-        return ReplyFlow.builder(db)
-            .onlyIf(upd -> upd.getCallbackQuery().getData().equalsIgnoreCase("subscribe"))
-            .action((bot, update) -> {
-                silent.send("Subscribed!:)", getChatId(update));
-            })
-            .build();
-    }
+//    public ReplyFlow subscribeReply() {
+//        return ReplyFlow.builder(db)
+//            .onlyIf(upd -> upd.getCallbackQuery().getData().equalsIgnoreCase("subscribe"))
+//            .action((bot, update) -> silent.send("Subscribed!:)", getChatId(update)))
+//            .build();
+//    }
 
     public ReplyFlow sendUvIndexWhenLocationIsSent() {
         return ReplyFlow.builder(db)
@@ -98,21 +129,28 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             .action((bot, update) -> {
                 Long chatId = getChatId(update);
                 Location location = update.getMessage().getLocation();
-                userService.signUp(chatId, location.getLatitude(), location.getLongitude());
-                String uvIndex = uvIndexService.getUvIndex(location.getLatitude(), location.getLongitude());
-                String text = "UV Index at " + location.getLatitude() + ";" + location.getLongitude() + " is " + uvIndex;
+                Coordinates coordinates = Coordinates.of(location.getLatitude(), location.getLongitude());
+                userService.signUp(chatId, coordinates);
+                String text = locationInfoService.getLocationInfo(coordinates);
+                silent.send(text, chatId);
+                boolean isSubscribed = userRepository.findByChatId(chatId).isPresent();
+                if (isSubscribed) {
+                    return;
+                }
                 silent.execute(SendMessage.builder()
                     .replyMarkup(InlineKeyboardMarkup.builder()
-                        .keyboard(List.of(
-                            new InlineKeyboardRow(subscribeButton())
+                        .keyboardRow(new InlineKeyboardRow(
+                            InlineKeyboardButton.builder()
+                                .callbackData("subscribe")
+                                .text("Subscribe")
+                                .build()
                         ))
-                        .build()
-                    )
-                    .text(text)
-                    .chatId(getChatId(update))
-                    .build());
-            })
-            .build();
+                        .build())
+                    .text("Do you want to subscribe to daily UV index?")
+                    .chatId(chatId)
+                    .build()
+                );
+            }).build();
     }
 
     @Override

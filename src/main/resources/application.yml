@@ -13,3 +13,5 @@ spring:
     change-log: classpath:/db/changelog-master.xml
     default-schema: public
     enabled: true
+
+logging.level.org.telegram.telegrambots: DEBUG
