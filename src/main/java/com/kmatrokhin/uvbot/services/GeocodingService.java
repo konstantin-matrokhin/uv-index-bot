@@ -18,6 +18,10 @@ public class GeocodingService {
     public String getLocationName(Coordinates coordinates) {
         log.info("Resolving location name for {}", coordinates);
         JsonNode jsonNode = httpExchangeService.request(URL_TEMPLATE, coordinates);
-        return String.valueOf(jsonNode.at("/address/city").textValue());
+        String addressType = jsonNode.get("addresstype").asText();
+        if (jsonNode.at("/address/city").isTextual()) {
+            return jsonNode.at("/address/city").textValue();
+        }
+        return jsonNode.at("/address/" + addressType).textValue();
     }
 }
