@@ -156,7 +156,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
 
     public ReplyFlow sendUvIndexWhenItsRequested() {
         return ReplyFlow.builder(db)
-            .onlyIf(update -> update.getMessage().getText().contains(UVI_REQUEST_TEXT))
+            .onlyIf(update -> Flag.MESSAGE.test(update) && update.getMessage().getText().contains(UVI_REQUEST_TEXT))
             .action((bot, update) -> sendUviMessage(update))
             .build();
     }

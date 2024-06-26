@@ -30,8 +30,8 @@ public class ScheduledNotificationsService {
     private final UvIndexAbility uvIndexAbility;
 
     @Transactional
-//    @Scheduled(cron = "@hourly")
-    @Scheduled(initialDelay = 0, fixedDelay = 60_000)
+    @Scheduled(cron = "@hourly")
+//    @Scheduled(initialDelay = 0, fixedDelay = 60_000)
     public void scheduledNotifications() {
         List<LocationEntity> allLocations = locationRepository.findAll();
         log.info("Scheduled updating UV info scheduled for {} locations", allLocations.size());
