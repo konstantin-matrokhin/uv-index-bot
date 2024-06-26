@@ -1,6 +1,7 @@
 package com.kmatrokhin.uvbot.telegram;
 
 import com.kmatrokhin.uvbot.dto.Coordinates;
+import com.kmatrokhin.uvbot.dto.LocationInfo;
 import com.kmatrokhin.uvbot.repositories.UserRepository;
 import com.kmatrokhin.uvbot.services.LocationInfoService;
 import com.kmatrokhin.uvbot.services.UserService;
@@ -116,13 +117,6 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             .build();
     }
 
-//    public ReplyFlow subscribeReply() {
-//        return ReplyFlow.builder(db)
-//            .onlyIf(upd -> upd.getCallbackQuery().getData().equalsIgnoreCase("subscribe"))
-//            .action((bot, update) -> silent.send("Subscribed!:)", getChatId(update)))
-//            .build();
-//    }
-
     public ReplyFlow sendUvIndexWhenLocationIsSent() {
         return ReplyFlow.builder(db)
             .onlyIf(Flag.LOCATION)
@@ -130,13 +124,14 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
                 Long chatId = getChatId(update);
                 Location location = update.getMessage().getLocation();
                 Coordinates coordinates = Coordinates.of(location.getLatitude(), location.getLongitude());
-                userService.signUp(chatId, coordinates);
-                String text = locationInfoService.getLocationInfo(coordinates);
-                silent.send(text, chatId);
+                LocationInfo locationInfo = locationInfoService.getLocationInfo(coordinates);
+                userService.signUpOrUpdate(update.getMessage().getFrom().getUserName(), chatId, locationInfo);
+                silent.send("UV index in " + locationInfo.getName() + " now is " + locationInfo.getUvIndex(), chatId);
                 boolean isSubscribed = userRepository.findByChatId(chatId).isPresent();
                 if (isSubscribed) {
                     return;
                 }
+
                 silent.execute(SendMessage.builder()
                     .replyMarkup(InlineKeyboardMarkup.builder()
                         .keyboardRow(new InlineKeyboardRow(

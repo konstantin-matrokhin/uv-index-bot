@@ -1,0 +1,24 @@
+@startuml
+
+entity "User" as u {
+    * id uuid
+    ---
+    * long chat_id
+    varchar name
+    * timestamp created_at
+}
+
+entity "Location" as l {
+    * id uuid
+    ---
+    * float latitude
+    * float longitude
+    * uuid user_id
+    varchar name
+    * real last_uv_index
+    * timestamp created_at
+}
+
+u }|-- l
+
+@enduml

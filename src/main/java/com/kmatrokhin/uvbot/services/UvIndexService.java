@@ -15,9 +15,10 @@ public class UvIndexService {
     private final HttpExchangeService httpExchangeService;
 
     @SneakyThrows
-    public String getUvIndex(Coordinates coordinates) {
+    public float getUvIndex(Coordinates coordinates) {
         log.info("Requesting uv index for coordinates: {}", coordinates);
         JsonNode jsonNode = httpExchangeService.request(URL_TEMPLATE, coordinates);
-        return String.valueOf(jsonNode.at("/hourly/uv_index").iterator().next().asDouble());
+        double uvIndexValue = jsonNode.at("/hourly/uv_index").iterator().next().asDouble();
+        return (float) uvIndexValue;
     }
 }

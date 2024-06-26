@@ -1,9 +1,11 @@
 package com.kmatrokhin.uvbot.entities;
 
+import com.kmatrokhin.uvbot.dto.Coordinates;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -12,7 +14,11 @@ import java.util.UUID;
 @Setter
 public class LocationEntity {
     @Id
-    private UUID id;
+    private UUID id = UUID.randomUUID();
+
+    private Double latitude;
+
+    private Double longitude;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -20,7 +26,11 @@ public class LocationEntity {
 
     private String name;
 
-    private Float latitude;
+    private Float lastUvIndex;
 
-    private Float longitude;
+    private Instant createdAt = Instant.now();
+
+    public Coordinates coordinates() {
+        return Coordinates.of(latitude, longitude);
+    }
 }

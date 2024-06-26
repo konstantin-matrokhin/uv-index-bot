@@ -11,4 +11,8 @@ import java.util.UUID;
 @Repository
 public interface LocationRepository extends JpaRepository<LocationEntity, UUID> {
     Optional<LocationEntity> findByUserEntity(UserEntity userEntity);
+
+    default LocationEntity getByUserEntity(UserEntity userEntity) {
+        return findByUserEntity(userEntity).orElseThrow();
+    }
 }

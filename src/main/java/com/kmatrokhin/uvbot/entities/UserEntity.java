@@ -6,6 +6,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -17,4 +18,8 @@ public class UserEntity {
     private UUID id = UUID.randomUUID();
 
     private Long chatId;
+
+    private String name;
+
+    private Instant createdAt = Instant.now();
 }
