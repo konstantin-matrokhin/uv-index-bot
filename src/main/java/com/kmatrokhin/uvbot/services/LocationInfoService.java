@@ -2,6 +2,7 @@ package com.kmatrokhin.uvbot.services;
 
 import com.kmatrokhin.uvbot.dto.Coordinates;
 import com.kmatrokhin.uvbot.dto.LocationInfo;
+import com.kmatrokhin.uvbot.dto.UvIndex;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +13,7 @@ public class LocationInfoService {
     private final GeocodingService geocodingService;
 
     public LocationInfo getLocationInfo(Coordinates coordinates) {
-        float uvIndex = uvIndexService.getUvIndex(coordinates);
+        UvIndex uvIndex = uvIndexService.getUvIndex(coordinates);
         String locationName = geocodingService.getLocationName(coordinates);
         return new LocationInfo(locationName, coordinates, uvIndex);
     }

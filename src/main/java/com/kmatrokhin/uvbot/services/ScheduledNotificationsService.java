@@ -23,10 +23,10 @@ public class ScheduledNotificationsService {
     private final LocationRepository locationRepository;
     private final UserRepository userRepository;
     private final LocationInfoService locationInfoService;
+    private final RecommendationService recommendationService;
 
-//    @Scheduled(cron = "@hourly")
-    @Scheduled(initialDelay = 0L, fixedDelay = 15_000L)
     @Transactional
+    @Scheduled(cron = "@hourly")
     public void scheduledNotifications() {
         List<LocationEntity> allLocations = locationRepository.findAll();
         log.info("Scheduled updating UV info scheduled for {} locations", allLocations.size());
@@ -34,18 +34,18 @@ public class ScheduledNotificationsService {
             Long chatId = loc.getUserEntity().getChatId();
             LocationInfo locationInfo = locationInfoService.getLocationInfo(loc.coordinates());
             float oldIndex = loc.getLastUvIndex();
-            float newIndex = locationInfo.getUvIndex();
+            float newIndex = locationInfo.getUvIndex().getValue();
             float delta = Math.abs(oldIndex - newIndex);
-            StringBuilder text;
+            String text;
             if (delta > 0) {
                 loc.setLastUvIndex(newIndex);
-                 text = new StringBuilder("UV has been changed. UVI in " + locationInfo.getName() + " now is " + locationInfo.getUvIndex());
+                text = recommendationService.createRecommendationText(locationInfo);
             } else {
-                text = new StringBuilder("UV index didn't change. It's " + locationInfo.getUvIndex());
+                return;
             }
             try {
                 telegramClient.execute(SendMessage.builder()
-                    .text(text.toString())
+                    .text(text)
                     .chatId(chatId)
                     .build()
                 );

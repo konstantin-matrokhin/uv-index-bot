@@ -2,6 +2,7 @@ package com.kmatrokhin.uvbot.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.kmatrokhin.uvbot.dto.Coordinates;
+import com.kmatrokhin.uvbot.dto.UvIndex;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -15,10 +16,10 @@ public class UvIndexService {
     private final HttpExchangeService httpExchangeService;
 
     @SneakyThrows
-    public float getUvIndex(Coordinates coordinates) {
+    public UvIndex getUvIndex(Coordinates coordinates) {
         log.info("Requesting uv index for coordinates: {}", coordinates);
         JsonNode jsonNode = httpExchangeService.request(URL_TEMPLATE, coordinates);
         double uvIndexValue = jsonNode.at("/hourly/uv_index").iterator().next().asDouble();
-        return (float) uvIndexValue;
+        return new UvIndex((float) uvIndexValue);
     }
 }
