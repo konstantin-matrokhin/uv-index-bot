@@ -30,7 +30,7 @@ public class UserService {
                 .setName(locationInfo.getName())
                 .setLatitude(coordinates.getLatitude())
                 .setLongitude(coordinates.getLongitude())
-                .setLastUvIndex(locationInfo.getUvIndex().getValue());
+                .setLastUvIndex(locationInfo.getWeather().getUvi());
         } else {
             UserEntity newUser = new UserEntity()
                 .setChatId(chatId)
@@ -40,7 +40,7 @@ public class UserService {
                 .setName(locationInfo.getName())
                 .setLatitude(coordinates.getLatitude())
                 .setLongitude(coordinates.getLongitude())
-                .setLastUvIndex(locationInfo.getUvIndex().getValue())
+                .setLastUvIndex(locationInfo.getWeather().getUvi())
                 .setUserEntity(newUser)
                 .setCreatedAt(Instant.now());
             userRepository.save(newUser);

@@ -1,15 +1,19 @@
 package com.kmatrokhin.uvbot.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class UvIndex {
-    private final float value;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Weather {
+    private final float uvi;
+    private final float temperature;
+    private final boolean isDay;
 
-    public Harm getHarm() {
-        return Harm.fromIndex(value);
+    public Harm getUvHarm() {
+        return Harm.fromIndex(uvi);
     }
 
     @Getter

@@ -10,5 +10,5 @@ import lombok.Setter;
 public class LocationInfo {
     private String name;
     private Coordinates coordinates;
-    private UvIndex uvIndex;
+    private Weather weather;
 }

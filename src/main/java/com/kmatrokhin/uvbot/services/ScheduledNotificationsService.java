@@ -1,11 +1,9 @@
 package com.kmatrokhin.uvbot.services;
 
 import com.kmatrokhin.uvbot.dto.LocationInfo;
-import com.kmatrokhin.uvbot.dto.UvIndex;
 import com.kmatrokhin.uvbot.entities.LocationEntity;
 import com.kmatrokhin.uvbot.repositories.LocationRepository;
 import com.kmatrokhin.uvbot.repositories.UserRepository;
-import com.kmatrokhin.uvbot.telegram.UvIndexAbility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,7 +25,6 @@ public class ScheduledNotificationsService {
     private final UserRepository userRepository;
     private final LocationInfoService locationInfoService;
     private final RecommendationService recommendationService;
-    private final UvIndexAbility uvIndexAbility;
 
     @Transactional
     @Scheduled(cron = "@hourly")
@@ -38,15 +35,16 @@ public class ScheduledNotificationsService {
         for (LocationEntity loc : allLocations) {
             Long chatId = loc.getUserEntity().getChatId();
             LocationInfo locationInfo = locationInfoService.getLocationInfo(loc.coordinates());
-            UvIndex oldIndex = new UvIndex(loc.getLastUvIndex());
-            UvIndex newIndex = locationInfo.getUvIndex();
-            if (!oldIndex.getHarm().equals(newIndex.getHarm())) {
-                loc.setLastUvIndex(newIndex.getValue());
+            float lastUvIndex = loc.getLastUvIndex();
+            float newIndex = locationInfo.getWeather().getUvi();
+            if (Math.abs(lastUvIndex - newIndex) >= 2) {
+                loc.setLastUvIndex(newIndex);
                 try {
                     telegramClient.execute(SendMessage.builder()
                             .replyMarkup(InlineKeyboardMarkup.builder()
                                 .build())
                             .text(recommendationService.createRecommendationText(locationInfo))
+                            .parseMode("html")
                             .chatId(chatId)
                             .build()
                     );

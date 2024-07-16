@@ -1,6 +1,7 @@
 package com.kmatrokhin.uvbot.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
@@ -10,14 +11,12 @@ import java.net.http.HttpClient;
 
 @Configuration
 public class TelegramBeanConfig {
-    @Bean
-    public String telegramToken() {
-        return System.getenv("TELEGRAM_TOKEN");
-    }
+    @Value("${telegram.token}")
+    private String telegramToken;
 
     @Bean
     public TelegramClient telegramClient() {
-        return new OkHttpTelegramClient(telegramToken());
+        return new OkHttpTelegramClient(telegramToken);
     }
 
     @Bean

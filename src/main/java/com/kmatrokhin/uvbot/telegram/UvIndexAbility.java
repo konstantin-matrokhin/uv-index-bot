@@ -12,12 +12,15 @@ import com.kmatrokhin.uvbot.services.UserService;
 import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.abilitybots.api.bot.AbilityBot;
 import org.telegram.telegrambots.abilitybots.api.db.MapDBContext;
 import org.telegram.telegrambots.abilitybots.api.objects.*;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.ActionType;
+import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Location;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -36,12 +39,15 @@ import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.isUser
 @Slf4j
 public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
     private static final String UVI_REQUEST_TEXT = "UVI at my location";
-    
+
     private final UserService userService;
     private final LocationInfoService locationInfoService;
     private final UserRepository userRepository;
     private final RecommendationService recommendationService;
     private final LocationRepository locationRepository;
+
+    @Value("${telegram.token}")
+    private String telegramToken;
 
     public UvIndexAbility(TelegramClient telegramClient, UserService userService, LocationInfoService locationInfoService, UserRepository userRepository, RecommendationService recommendationService, LocationRepository locationRepository) {
         super(telegramClient, "uv_advisor_bot", MapDBContext.onlineInstance("uv_bot.db"));
@@ -156,7 +162,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
 
     public ReplyFlow sendUvIndexWhenItsRequested() {
         return ReplyFlow.builder(db)
-            .onlyIf(update -> Flag.MESSAGE.test(update) && update.getMessage().getText().contains(UVI_REQUEST_TEXT))
+            .onlyIf(update -> Flag.TEXT.test(update) && update.getMessage().getText().contains(UVI_REQUEST_TEXT))
             .action((bot, update) -> sendUviMessage(update))
             .build();
     }
@@ -186,9 +192,16 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
         LocationInfo locationInfo = locationInfoService.getLocationInfo(coordinates);
         userService.signUpOrUpdate(update.getMessage().getFrom().getUserName(), chatId, locationInfo);
 
+        silent.execute(
+            SendChatAction.builder()
+                .chatId(chatId)
+                .action(ActionType.TYPING.toString())
+                .build()
+        );
         silent.execute(SendMessage.builder()
             .replyMarkup(mainKeyboard())
             .text(recommendationService.createRecommendationText(locationInfo))
+            .parseMode("html")
             .chatId(chatId)
             .build()
         );
@@ -201,7 +214,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
 
     @Override
     public String getBotToken() {
-        return System.getenv("TELEGRAM_TOKEN");
+        return telegramToken;
     }
 
     @Override

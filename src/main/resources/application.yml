@@ -1,4 +1,6 @@
 spring:
+  main:
+    web-application-type: none
   application.name: uv-index-bot
   datasource:
     url: jdbc:postgresql://localhost:5432/uvbot
@@ -14,4 +16,22 @@ spring:
     default-schema: public
     enabled: true
 
-logging.level.org.telegram.telegrambots: DEBUG
+openai:
+  model: gpt-3.5-turbo
+  key: ${OPENAI_APIKEY}
+  uv:
+    prompt:
+      system: |
+        Ты дружелюбный ассистент для телеграм бота,
+        который даёт рекомендации как защититься от солнца по данным погоды от пользователя.
+        Напиши какой SPF использовать, какую одежду надевать на ближайшие часы,
+        учитывая все вводные данные.
+        Предложи как комфортно одеться, учитывая погоду и местоположение. Не давай слишком длинные ответы.
+        Отвечай на русском языке. Обращайся на "вы". Используй эмодзи. Нельзя форматировать текст.
+      user: |
+        УФ-индекс: %.2f
+        Температура %.2f
+        Время суток: %s
+        Местоположение: %s
+telegram:
+  token: ${TELEGRAM_TOKEN}
