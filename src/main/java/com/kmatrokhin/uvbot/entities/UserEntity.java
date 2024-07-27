@@ -16,10 +16,9 @@ import java.util.UUID;
 public class UserEntity {
     @Id
     private UUID id = UUID.randomUUID();
-
     private Long chatId;
-
     private String name;
-
+    private Boolean isSubscribed;
+//    private Integer buttonsMessageId;
     private Instant createdAt = Instant.now();
 }

@@ -9,4 +9,4 @@ services:
       - 'POSTGRES_PASSWORD=UvBotPassword6969!'
       - 'POSTGRES_USER=postgres'
     ports:
-      - '5432:5432'
+      - '5433:5432'

@@ -15,19 +15,13 @@ import java.util.UUID;
 public class LocationEntity {
     @Id
     private UUID id = UUID.randomUUID();
-
     private Double latitude;
-
     private Double longitude;
-
     @ManyToOne
     @JoinColumn(name = "user_id")
     private UserEntity userEntity;
-
     private String name;
-
     private Float lastUvIndex;
-
     private Instant createdAt = Instant.now();
 
     public Coordinates coordinates() {

@@ -2,6 +2,7 @@ package com.kmatrokhin.uvbot.services;
 
 import com.kmatrokhin.uvbot.dto.Coordinates;
 import com.kmatrokhin.uvbot.dto.LocationInfo;
+import com.kmatrokhin.uvbot.dto.UserSignUp;
 import com.kmatrokhin.uvbot.entities.LocationEntity;
 import com.kmatrokhin.uvbot.entities.UserEntity;
 import com.kmatrokhin.uvbot.repositories.LocationRepository;
@@ -20,12 +21,18 @@ public class UserService {
     private final LocationRepository locationRepository;
 
     @Transactional
-    public void signUpOrUpdate(String username, Long chatId, LocationInfo locationInfo) {
+    public void signUpOrUpdate(UserSignUp userSignUp) {
+        Long chatId = userSignUp.getChatId();
+        String username = userSignUp.getName();
+        LocationInfo locationInfo = userSignUp.getLocationInfo();
+
         Optional<UserEntity> userEntityOpt = userRepository.findByChatId(chatId);
         Coordinates coordinates = locationInfo.getCoordinates();
         if (userEntityOpt.isPresent()) {
             UserEntity userEntity = userEntityOpt.get();
-            userEntity.setName(username);
+            userEntity
+                .setName(username)
+                .setIsSubscribed(true);
             locationRepository.getByUserEntity(userEntity)
                 .setName(locationInfo.getName())
                 .setLatitude(coordinates.getLatitude())
@@ -35,6 +42,7 @@ public class UserService {
             UserEntity newUser = new UserEntity()
                 .setChatId(chatId)
                 .setName(username)
+                .setIsSubscribed(true)
                 .setCreatedAt(Instant.now());
             LocationEntity newLocation = new LocationEntity()
                 .setName(locationInfo.getName())
@@ -46,6 +54,16 @@ public class UserService {
             userRepository.save(newUser);
             locationRepository.save(newLocation);
         }
+    }
+
+    @Transactional
+    public void setSubscription(Long chatId, boolean isSubscribed) {
+        userRepository.getByChatId(chatId).setIsSubscribed(isSubscribed);
+    }
+
+    @Transactional
+    public boolean isSubscribed(Long chatId) {
+        return userRepository.findByChatId(chatId).map(UserEntity::getIsSubscribed).orElse(false);
     }
 
 }

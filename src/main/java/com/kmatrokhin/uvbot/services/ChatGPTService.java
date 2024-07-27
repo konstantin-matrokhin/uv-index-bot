@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ChatGPTService {
     private final ChatGPTClient chatGPTClient;
-
     @Value("${openai.key}")
     private String apiKey;
     @Value("${openai.model}")
@@ -31,7 +30,8 @@ public class ChatGPTService {
         ChatRequest chatRequest = new ChatRequest(model, systemPrompt, userPrompt);
         String authorizationHeader = "Bearer " + apiKey;
         log.info("Request to ChatGPT: " + chatRequest);
-        ChatResponse chatCompletion = chatGPTClient.getChatCompletion(authorizationHeader, chatRequest);
+        ChatResponse chatCompletion = chatGPTClient.
+            getChatCompletion(authorizationHeader, chatRequest);
         log.info("Response from ChatGPT: " + chatCompletion);
         return chatCompletion;
     }
