@@ -22,14 +22,14 @@ public class RecommendationService {
             .append("☀️ <b>УФ индекс:</b> ").append(weather.getUvi())
             .append(" (").append(weather.getUvHarm().getText()).append(")").append("\n\n")
             .append("🌡️️ <b>Температура:</b> ").append(weather.getTemperature()).append("°C\n\n")
-            .append("📍 <b>Место:</b> ").append(locationInfo.getName());
+            .append("📍 <b>Место:</b> ").append(locationInfo.getName()).append("\n\n");
         if (openaiEnabled) {
             ChatResponse chatResponse = chatGPTService.getChatResponse(locationInfo);
             String aiRecommendation = chatResponse.getChoices().get(0).getMessage().getContent();
             recommendation
                 .append("🤖 <b>Рекомендация ИИ:</b> ")
                 .append(aiRecommendation)
-                .append("\n");
+                .append("\n\n");
         }
         return recommendation.toString();
     }
