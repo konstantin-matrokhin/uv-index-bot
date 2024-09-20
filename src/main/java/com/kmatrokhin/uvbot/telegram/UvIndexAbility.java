@@ -42,8 +42,10 @@ import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.isUser
 @Service
 @Slf4j
 public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
-    private static final String UVI_REQUEST_TEXT = "Узнать УФИ";
-    private static final String SETTINGS_TEXT = "Настройки и помощь";
+    private static final String UVI_REQUEST_TEXT = "Get UVI";
+    private static final String UVI_REQUEST_TEXT_RU = "Узнать УФИ";
+    private static final String SETTINGS_TEXT = "Settings and help";
+    private static final String SETTINGS_TEXT_RU = "Настройки и помощь";
 
     private final UserService userService;
     private final LocationInfoService locationInfoService;
@@ -92,7 +94,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
         silent.execute(
             SendMessage.builder()
                 .replyMarkup(startKeyboard())
-                .text("Пожалуйста, пришлите ваше местоположение.")
+                .text("Please send a location.")
                 .chatId(getChatId(update))
                 .build()
         );
@@ -124,7 +126,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
         silent.execute(
             SendMessage.builder()
                 .replyMarkup(mainKeyboard())
-                .text("Добро пожаловать обратно!")
+                .text("Welcome! Please send your location.")
                 .chatId(getChatId(update))
                 .build()
         );
@@ -139,7 +141,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
     public KeyboardButton locationButton() {
         return KeyboardButton.builder()
             .requestLocation(true)
-            .text("📍 Отправить локацию")
+            .text("📍 Send location")
             .build();
     }
 
@@ -152,14 +154,14 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
     public InlineKeyboardButton subscribeButton() {
         return InlineKeyboardButton.builder()
             .callbackData("subscribe")
-            .text("Подписаться")
+            .text("Subscribe")
             .build();
     }
 
     public InlineKeyboardButton unsubscribeButton() {
         return InlineKeyboardButton.builder()
             .callbackData("unsubscribe")
-            .text("Отписаться")
+            .text("Unsubscribe")
             .build();
     }
 
@@ -171,7 +173,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
 
     public ReplyFlow sendUvIndexWhenItsRequested() {
         return ReplyFlow.builder(db)
-            .onlyIf(update -> Flag.TEXT.test(update) && update.getMessage().getText().contains(UVI_REQUEST_TEXT))
+            .onlyIf(update -> Flag.TEXT.test(update) && (update.getMessage().getText().contains(UVI_REQUEST_TEXT) || update.getMessage().getText().contains(UVI_REQUEST_TEXT_RU)))
             .action((bot, update) -> sendUviMessage(update))
             .build();
     }
@@ -185,22 +187,22 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
     public void unsubscribe(Update update) {
         Long chatId = getChatId(update);
         userService.setSubscription(chatId, false);
-        silent.send("Вы отписались от уведомлений 😪 Возвращайтесь скорее, чтобы всегда быть защищенным от солнца.", chatId);
+        silent.send("You have unsubscribed from notifications 😪 Come back soon to always stay protected from the sun", chatId);
     }
 
     public void subscribe(Update update) {
         Long chatId = getChatId(update);
         userService.setSubscription(chatId, true);
-        silent.send("Ура! Теперь мы будем присылать уведомления при изменении УФ-индекса!", chatId);
+        silent.send("Hooray! We will now send notifications when the UV index changes!", chatId);
     }
 
     public ReplyFlow sendSettingsAndHelp() {
         return ReplyFlow.builder(db)
-            .onlyIf(update -> Flag.TEXT.test(update) && update.getMessage().getText().contains(SETTINGS_TEXT))
+            .onlyIf(update -> Flag.TEXT.test(update) && (update.getMessage().getText().contains(SETTINGS_TEXT) || update.getMessage().getText().contains(SETTINGS_TEXT_RU)))
             .action((bot, update) -> {
                 silent.execute(SendMessage.builder()
                     .chatId(getChatId(update))
-                    .text("Что вы хотите сделать?")
+                    .text("What do you want to do?")
                     .replyMarkup(InlineKeyboardMarkup.builder()
                         .keyboard(helpInlineKeyboard(update))
                         .build()
@@ -222,14 +224,14 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
 
     private InlineKeyboardButton cannotSendLocationButton() {
         return InlineKeyboardButton.builder()
-            .text("Не отправляется геолокация")
+            .text("Cannot send geolocation")
             .callbackData("cannot_send_location")
             .build();
     }
 
     private InlineKeyboardButton ourTgChannelButton() {
         return InlineKeyboardButton.builder()
-            .text("Наш телеграм канал")
+            .text("Out telegram channel")
             .callbackData("our_tg_channel")
             .build();
     }
@@ -238,18 +240,17 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
         return ReplyFlow.builder(db)
             .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("cannot_send_location"))
             .action((bot, update) -> silent.send("""
-                – В Telegram для Windows нет возможности отправить геолокацию.
-                – Чтобы отправить геолокацию в macOS, отправьте её вручную через кнопку с изображением скрепки возле поля ввода сообщения. Кнопка в боте может не работать.
+                – In Telegram for Windows, it is not possible to send a location.
+                – To send a location in macOS, manually send it using the button with a paperclip icon next to the message input field. The button in the bot might not work.
                 
-                Используйте мобильное устройство, чтобы отправить геолокацию.
-                """, getChatId(update))).build();
+                Use a mobile device to send a location.""", getChatId(update))).build();
     }
 
     public ReplyFlow outTgChannel() {
         return ReplyFlow.builder(db)
             .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("our_tg_channel"))
             .action((bot, update) -> silent.send("""
-                Наш телеграм канал: t.me/PatchMapping
+                Our telegram channel: https://t.me/@muskrat_dev
                 """, getChatId(update))).build();
     }
 

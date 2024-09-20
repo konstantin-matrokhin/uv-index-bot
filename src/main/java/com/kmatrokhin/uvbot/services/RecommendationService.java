@@ -19,15 +19,15 @@ public class RecommendationService {
         Weather weather = locationInfo.getWeather();
         StringBuilder recommendation = new StringBuilder();
         recommendation
-            .append("☀️ <b>УФ индекс:</b> ").append(weather.getUvi())
-            .append(" (").append(weather.getUvHarm().getText()).append(")").append("\n\n")
-            .append("🌡️️ <b>Температура:</b> ").append(weather.getTemperature()).append("°C\n\n")
-            .append("📍 <b>Место:</b> ").append(locationInfo.getName()).append("\n\n");
+            .append("☀️ <b>UV index:</b> ").append(weather.getUvi())
+            .append(" (").append(weather.getUvHarm().getText()).append(")").append("\n")
+            .append("🌡️️ <b>Temperature:</b> ").append(weather.getTemperature()).append("°C\n")
+            .append("📍 <b>Place:</b> ").append(locationInfo.getName()).append("\n\n");
         if (openaiEnabled) {
             ChatResponse chatResponse = chatGPTService.getChatResponse(locationInfo);
             String aiRecommendation = chatResponse.getChoices().get(0).getMessage().getContent();
             recommendation
-                .append("🤖 <b>Рекомендация ИИ:</b> ")
+                .append("🤖 <b>AI recommendation:</b> ")
                 .append(aiRecommendation)
                 .append("\n\n");
         }

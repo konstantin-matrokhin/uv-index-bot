@@ -18,11 +18,11 @@ public class Weather {
 
     @Getter
     public enum Harm {
-        LOW(2, "Низкий"),
-        MODERATE(5, "Умеренный"),
-        HIGH(7, "Высокий"),
-        VERY_HIGH(10, "Очень высокий"),
-        EXTREME(Float.POSITIVE_INFINITY, "Чрезмерный");
+        LOW(2, "Low"),
+        MODERATE(5, "Moderate"),
+        HIGH(7, "High"),
+        VERY_HIGH(10, "Very high"),
+        EXTREME(Float.POSITIVE_INFINITY, "Extreme");
 
         private final float maxUvIndex;
         private final String text;

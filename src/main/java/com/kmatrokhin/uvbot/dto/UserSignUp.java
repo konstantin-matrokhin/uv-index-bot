@@ -8,6 +8,5 @@ import lombok.Setter;
 public class UserSignUp {
     private Long chatId;
     private String name;
-//    private String buttonsMessageId;
     private LocationInfo locationInfo;
 }

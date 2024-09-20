@@ -19,6 +19,5 @@ public class UserEntity {
     private Long chatId;
     private String name;
     private Boolean isSubscribed;
-//    private Integer buttonsMessageId;
     private Instant createdAt = Instant.now();
 }
