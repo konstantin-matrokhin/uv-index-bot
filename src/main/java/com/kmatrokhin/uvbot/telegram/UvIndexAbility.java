@@ -250,7 +250,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
         return ReplyFlow.builder(db)
             .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("our_tg_channel"))
             .action((bot, update) -> silent.send("""
-                Our telegram channel: https://t.me/@muskrat_dev
+                Our telegram channel: @muskrat_dev
                 """, getChatId(update))).build();
     }
 
