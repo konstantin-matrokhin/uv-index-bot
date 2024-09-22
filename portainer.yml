@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    restart: no
+    ports:
+      - "5432:5432"
+    env_file:
+      - stack.env
+  backend:
+    restart: no
+    image: 'ghcr.io/konstantin-matrokhin/uv-index-bot:latest'
+    env_file:
+      - stack.env
+    network_mode: host
+    ports:
+      - "8443:8443"
+    depends_on:
+      - postgres
