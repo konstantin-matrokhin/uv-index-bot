@@ -231,7 +231,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
 
     private InlineKeyboardButton ourTgChannelButton() {
         return InlineKeyboardButton.builder()
-            .text("Out telegram channel")
+            .text("Contact us")
             .callbackData("our_tg_channel")
             .build();
     }
@@ -250,7 +250,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
         return ReplyFlow.builder(db)
             .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("our_tg_channel"))
             .action((bot, update) -> silent.send("""
-                Our telegram channel: @muskrat_dev
+                Text me: @PatchMapping
                 """, getChatId(update))).build();
     }
 
