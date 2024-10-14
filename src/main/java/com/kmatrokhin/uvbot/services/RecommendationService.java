@@ -20,7 +20,7 @@ public class RecommendationService {
         StringBuilder recommendation = new StringBuilder();
         recommendation
             .append("☀️ <b>UV index:</b> ").append(weather.getUvi())
-            .append(" (").append(weather.getUvHarm().getText()).append(")").append("\n")
+            .append(" (").append(weather.getUvHarm().getI18nKey()).append(")").append("\n")
             .append("🌡️️ <b>Temperature:</b> ").append(weather.getTemperature()).append("°C\n")
             .append("📍 <b>Place:</b> ").append(locationInfo.getName()).append("\n\n");
         if (openaiEnabled) {

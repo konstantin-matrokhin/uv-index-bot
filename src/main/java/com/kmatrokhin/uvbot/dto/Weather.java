@@ -18,18 +18,18 @@ public class Weather {
 
     @Getter
     public enum Harm {
-        LOW(2, "Low"),
-        MODERATE(5, "Moderate"),
-        HIGH(7, "High"),
-        VERY_HIGH(10, "Very high"),
-        EXTREME(Float.POSITIVE_INFINITY, "Extreme");
+        LOW(2, "low"),
+        MODERATE(5, "moderate"),
+        HIGH(7, "high"),
+        VERY_HIGH(10, "very_high"),
+        EXTREME(Float.POSITIVE_INFINITY, "extreme");
 
         private final float maxUvIndex;
-        private final String text;
+        private final String i18nKey;
 
-        Harm(float maxUvIndex, String text) {
+        Harm(float maxUvIndex, String i18nKey) {
             this.maxUvIndex = maxUvIndex;
-            this.text = text;
+            this.i18nKey = i18nKey;
         }
 
         public static Harm fromIndex(float uvIndex) {
