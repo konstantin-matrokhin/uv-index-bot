@@ -1,6 +1,7 @@
 package com.kmatrokhin.uvbot.services;
 
 import com.kmatrokhin.uvbot.chatgpt.ChatResponse;
+import com.kmatrokhin.uvbot.dto.I18nProperties;
 import com.kmatrokhin.uvbot.dto.LocationInfo;
 import com.kmatrokhin.uvbot.dto.Weather;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RecommendationService {
     private final ChatGPTService chatGPTService;
+    private final I18nProperties i18nProperties;
 
     @Value("${openai.enabled:true}")
     private boolean openaiEnabled;

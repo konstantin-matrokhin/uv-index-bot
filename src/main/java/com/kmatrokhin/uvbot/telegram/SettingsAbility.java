@@ -8,6 +8,7 @@ import org.telegram.telegrambots.abilitybots.api.objects.Flag;
 import org.telegram.telegrambots.abilitybots.api.objects.ReplyFlow;
 import org.telegram.telegrambots.abilitybots.api.util.AbilityExtension;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -56,27 +57,26 @@ public class SettingsAbility implements AbilityExtension {
     public ReplyFlow sendSettingsAndHelp() {
         return ReplyFlow.builder(uvIndexAbility.getDB())
             .onlyIf(update -> Flag.TEXT.test(update) && (update.getMessage().getText().contains(SETTINGS_TEXT)))
-            .action((bot, update) -> {
-                uvIndexAbility.getSilent().execute(SendMessage.builder()
-                    .chatId(getChatId(update))
-                    .text("What do you want to do?")
-                    .replyMarkup(InlineKeyboardMarkup.builder()
-                        .keyboard(helpInlineKeyboard(update))
+            .action((bot, update) -> uvIndexAbility.getSilent()
+                .execute(
+                    SendMessage.builder()
+                        .chatId(getChatId(update))
+                        .text("What do you want to do?")
+                        .replyMarkup(helpInlineKeyboard(update))
                         .build()
-                    )
-                    .build());
-            })
+                )
+            )
             .build();
     }
 
-    private List<InlineKeyboardRow> helpInlineKeyboard(Update update) {
-        return List.of(
+    private InlineKeyboardMarkup helpInlineKeyboard(Update update) {
+        return InlineKeyboardMarkup.builder().keyboard(List.of(
             new InlineKeyboardRow(
                 userService.isSubscribed(getChatId(update)) ? unsubscribeButton() : subscribeButton()
             ),
             new InlineKeyboardRow(cannotSendLocationButton())
-//            new InlineKeyboardRow(ourTgChannelButton())
-        );
+//            new InlineKeyboardRow(lang())
+        )).build();
     }
 
     private InlineKeyboardButton cannotSendLocationButton() {
@@ -90,6 +90,13 @@ public class SettingsAbility implements AbilityExtension {
         return InlineKeyboardButton.builder()
             .text("Out telegram channel")
             .callbackData("our_tg_channel")
+            .build();
+    }
+
+    private InlineKeyboardButton lang() {
+        return InlineKeyboardButton.builder()
+            .text("🇬🇧 Select language")
+            .callbackData("lang_menu")
             .build();
     }
 
@@ -109,6 +116,50 @@ public class SettingsAbility implements AbilityExtension {
             .action((bot, update) -> uvIndexAbility.getSilent().send("""
                 Our telegram channel: @muskrat_dev
                 """, getChatId(update))).build();
+    }
+
+    public ReplyFlow langMenuCallback() {
+        return ReplyFlow.builder(uvIndexAbility.getDB())
+            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("lang_menu"))
+            .action((bot, update) -> uvIndexAbility.getSilent().execute(EditMessageReplyMarkup.builder()
+                .messageId(update.getCallbackQuery().getMessage().getMessageId())
+                .replyMarkup(langMenu())
+                .build()))
+            .build();
+    }
+
+    public ReplyFlow langSelectEnCallback() {
+        return ReplyFlow.builder(uvIndexAbility.getDB())
+            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("lang_en"))
+            .action((bot, update) -> uvIndexAbility.getSilent().execute(SendMessage.builder()
+                    .text("Done!")
+                .build()))
+            .build();
+    }
+
+    public ReplyFlow langSelectRuCallback() {
+        return ReplyFlow.builder(uvIndexAbility.getDB())
+            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("lang_ru"))
+            .action((bot, update) -> uvIndexAbility.getSilent().execute(SendMessage.builder()
+                    .text("Готово!")
+                .build()))
+            .build();
+    }
+
+    public InlineKeyboardMarkup langMenu() {
+        return InlineKeyboardMarkup.builder()
+            .keyboard(List.of(new InlineKeyboardRow(
+                InlineKeyboardButton.builder()
+                    .text("🇬🇧 English")
+                    .callbackData("lang_en")
+                    .build()
+            ), new InlineKeyboardRow(
+                InlineKeyboardButton.builder()
+                    .text("🇷🇺 Russian")
+                    .callbackData("lang_ru")
+                    .build()
+            )))
+            .build();
     }
 
 

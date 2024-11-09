@@ -8,6 +8,8 @@ spring:
     password: UvBotPassword6969!
     hikari:
       schema: public
+  profiles:
+    active: en,ru
   jpa:
     hibernate:
       ddl-auto: validate

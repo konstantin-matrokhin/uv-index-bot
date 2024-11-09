@@ -1,0 +1,7 @@
+i18n.dictionary:
+  en:
+    recommendation: |
+      ☀️ УФ индекс: {uvi} ({uvi_level})
+      🌡️️ Температура: {temperature}°C
+      📍 Место: {place}
+      🤖 Рекомендация ИИ: {ai_recommendation}

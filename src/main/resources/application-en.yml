@@ -1,0 +1,7 @@
+i18n.dictionary:
+  english:
+    recommendation: |
+      ☀️ UV index: {uvi} ({uvi_level})
+      🌡️️ Temperature: {temperature}°C
+      📍 Place: {place}
+      🤖 AI recommendation: {ai_recommendation}
