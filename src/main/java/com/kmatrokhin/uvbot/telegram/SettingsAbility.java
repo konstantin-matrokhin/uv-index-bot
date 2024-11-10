@@ -108,7 +108,7 @@ public class SettingsAbility implements AbilityExtension {
     private InlineKeyboardButton lang() {
         return InlineKeyboardButton.builder()
             .text("Language | Язык")
-            .callbackData("lang_menu")
+            .callbackData("lang_menu")  
             .build();
     }
 

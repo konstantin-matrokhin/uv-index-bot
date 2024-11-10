@@ -20,5 +20,18 @@ i18n.dictionary.ENGLISH:
   settings_menu_title: What do you want to do?
   subscribe_reply: Hooray! We will now send notifications when the UV index changes!
   unsubscribe_reply: You have unsubscribed from notifications 😪 Come back soon to always stay protected from the sun.
-  init_message: Please send a location.
+  init_message: |
+    👋 Please send your location 👇📍 Press the button in the menu.
+    
+    🤷‍♀️If nothing happened or you can't see the button,
+    press paperclip 📎 button next to the message field in Telegram and choose "Location".
+    
+    _______________________________
+    
+    👋 Пожалуйста, отправьте геолокацию 👇📍 Нажмите кнопку в меню.
+    
+    🤷‍♀️Если ничего не произошло или кнопку не видно,
+    нажмите на иконку 📎 скрепки возле поля ввода сообщения и выберите "Геопозиция".
+    
+    🇬🇧 Язык можно изменить в настройках ✨
   main_menu: Welcome! Please send your location.

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class GeocodingService {
-    private static final String URL_TEMPLATE = "https://nominatim.openstreetmap.org/reverse?format=json&lat=%s&lon=%s&zoom=18&addressdetails=1";
+    private static final String URL_TEMPLATE = "https://nominatim.openstreetmap.org/reverse?format=json&lat=%s&lon=%s&zoom=18&addressdetails=1&email=remillary@gmail.com";
     private final HttpExchangeService httpExchangeService;
 
     @SneakyThrows

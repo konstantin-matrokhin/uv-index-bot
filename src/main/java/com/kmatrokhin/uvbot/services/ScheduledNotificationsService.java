@@ -3,11 +3,13 @@ package com.kmatrokhin.uvbot.services;
 import com.kmatrokhin.uvbot.dto.LocationInfo;
 import com.kmatrokhin.uvbot.entities.LocationEntity;
 import com.kmatrokhin.uvbot.entities.UserEntity;
+import com.kmatrokhin.uvbot.events.UserBlockedBotEvent;
 import com.kmatrokhin.uvbot.repositories.LocationRepository;
 import com.kmatrokhin.uvbot.repositories.UserRepository;
 import com.kmatrokhin.uvbot.telegram.UvIndexAbility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,7 @@ public class ScheduledNotificationsService {
     private final LocationInfoService locationInfoService;
     private final RecommendationService recommendationService;
     private final UvIndexAbility uvIndexAbility;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     @Scheduled(cron = "@hourly")
@@ -55,6 +58,7 @@ public class ScheduledNotificationsService {
                 } catch (TelegramApiException e) {
                     log.error(e.getMessage());
                     if (e.getMessage().contains("403")) {
+                        applicationEventPublisher.publishEvent(new UserBlockedBotEvent(userEntity, loc));
                         locationRepository.delete(loc);
                         userRepository.delete(userEntity);
                     }

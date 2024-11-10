@@ -81,12 +81,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
             .action(context -> {
-                Optional<UserEntity> user = userRepository.findByChatId(context.chatId());
-                if (user.isEmpty()) {
-                    sendInitMessage(context.update(), UserLanguage.ENGLISH);
-                } else {
-                    showMainMenu(context.update(), user.get().getLanguage());
-                }
+                sendInitMessage(context.update(), UserLanguage.ENGLISH);
             })
             .build();
     }
@@ -191,8 +186,9 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             return;
         }
         LocationInfo locationInfo = locationInfoService.getLocationInfo(coordinates);
+        String userName = update.getMessage().getFrom().getUserName();
         UserSignUp userSignUp = new UserSignUp()
-            .setName(update.getMessage().getFrom().getUserName())
+            .setName(userName != null ? "@" + userName : update.getMessage().getFrom().getFirstName() + " " + update.getMessage().getFrom().getLastName())
             .setChatId(chatId)
             .setLocationInfo(locationInfo);
         UserEntity userEntity = userService.signUpOrUpdate(userSignUp);

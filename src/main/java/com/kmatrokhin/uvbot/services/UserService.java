@@ -6,9 +6,11 @@ import com.kmatrokhin.uvbot.dto.UserSignUp;
 import com.kmatrokhin.uvbot.entities.LocationEntity;
 import com.kmatrokhin.uvbot.entities.UserEntity;
 import com.kmatrokhin.uvbot.entities.UserLanguage;
+import com.kmatrokhin.uvbot.events.UserRegisteredEvent;
 import com.kmatrokhin.uvbot.repositories.LocationRepository;
 import com.kmatrokhin.uvbot.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final LocationRepository locationRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public UserEntity signUpOrUpdate(UserSignUp userSignUp) {
@@ -55,6 +58,7 @@ public class UserService {
                 .setCreatedAt(Instant.now());
             userRepository.save(userEntity);
             locationRepository.save(newLocation);
+            applicationEventPublisher.publishEvent(new UserRegisteredEvent(userEntity, newLocation));
         }
         return userEntity;
     }
