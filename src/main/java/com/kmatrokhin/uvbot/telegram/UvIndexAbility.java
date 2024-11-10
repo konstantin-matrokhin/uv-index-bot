@@ -186,7 +186,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             .setName(update.getMessage().getFrom().getUserName())
             .setChatId(chatId)
             .setLocationInfo(locationInfo);
-        userService.signUpOrUpdate(userSignUp);
+        UserEntity userEntity = userService.signUpOrUpdate(userSignUp);
 
         silent.execute(
             SendChatAction.builder()
@@ -196,7 +196,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
         );
         silent.execute(SendMessage.builder()
             .replyMarkup(mainKeyboard())
-            .text(recommendationService.createRecommendationText(locationInfo))
+            .text(recommendationService.createRecommendationText(locationInfo, userEntity.getLanguage()))
             .parseMode("html")
             .chatId(chatId)
             .build()

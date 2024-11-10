@@ -1,5 +1,6 @@
 package com.kmatrokhin.uvbot.telegram;
 
+import com.kmatrokhin.uvbot.entities.UserLanguage;
 import com.kmatrokhin.uvbot.services.UserService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +9,6 @@ import org.telegram.telegrambots.abilitybots.api.objects.Flag;
 import org.telegram.telegrambots.abilitybots.api.objects.ReplyFlow;
 import org.telegram.telegrambots.abilitybots.api.util.AbilityExtension;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -74,8 +74,8 @@ public class SettingsAbility implements AbilityExtension {
             new InlineKeyboardRow(
                 userService.isSubscribed(getChatId(update)) ? unsubscribeButton() : subscribeButton()
             ),
-            new InlineKeyboardRow(cannotSendLocationButton())
-//            new InlineKeyboardRow(lang())
+            new InlineKeyboardRow(cannotSendLocationButton()),
+            new InlineKeyboardRow(lang())
         )).build();
     }
 
@@ -120,10 +120,12 @@ public class SettingsAbility implements AbilityExtension {
 
     public ReplyFlow langMenuCallback() {
         return ReplyFlow.builder(uvIndexAbility.getDB())
-            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("lang_menu"))
-            .action((bot, update) -> uvIndexAbility.getSilent().execute(EditMessageReplyMarkup.builder()
-                .messageId(update.getCallbackQuery().getMessage().getMessageId())
+            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update)
+                && update.getCallbackQuery().getData().equalsIgnoreCase("lang_menu")
+            ).action((bot, update) -> uvIndexAbility.getSilent().execute(SendMessage.builder()
                 .replyMarkup(langMenu())
+                .text("Choose a language")
+                .chatId(getChatId(update))
                 .build()))
             .build();
     }
@@ -131,18 +133,26 @@ public class SettingsAbility implements AbilityExtension {
     public ReplyFlow langSelectEnCallback() {
         return ReplyFlow.builder(uvIndexAbility.getDB())
             .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("lang_en"))
-            .action((bot, update) -> uvIndexAbility.getSilent().execute(SendMessage.builder()
+            .action((bot, update) -> {
+                userService.setLanguage(getChatId(update), UserLanguage.ENGLISH);
+                uvIndexAbility.getSilent().execute(SendMessage.builder()
                     .text("Done!")
-                .build()))
+                    .chatId(getChatId(update))
+                    .build());
+                })
             .build();
     }
 
     public ReplyFlow langSelectRuCallback() {
         return ReplyFlow.builder(uvIndexAbility.getDB())
             .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("lang_ru"))
-            .action((bot, update) -> uvIndexAbility.getSilent().execute(SendMessage.builder()
+            .action((bot, update) -> {
+                userService.setLanguage(getChatId(update), UserLanguage.RUSSIAN);
+                uvIndexAbility.getSilent().execute(SendMessage.builder()
                     .text("Готово!")
-                .build()))
+                    .chatId(getChatId(update))
+                    .build());
+            })
             .build();
     }
 

@@ -4,9 +4,14 @@ import com.kmatrokhin.uvbot.chatgpt.ChatResponse;
 import com.kmatrokhin.uvbot.dto.I18nProperties;
 import com.kmatrokhin.uvbot.dto.LocationInfo;
 import com.kmatrokhin.uvbot.dto.Weather;
+import com.kmatrokhin.uvbot.entities.UserLanguage;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.text.StringSubstitutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -17,22 +22,24 @@ public class RecommendationService {
     @Value("${openai.enabled:true}")
     private boolean openaiEnabled;
 
-    public String createRecommendationText(LocationInfo locationInfo) {
+    public String createRecommendationText(LocationInfo locationInfo, UserLanguage userLanguage) {
         Weather weather = locationInfo.getWeather();
-        StringBuilder recommendation = new StringBuilder();
-        recommendation
-            .append("☀️ <b>UV index:</b> ").append(weather.getUvi())
-            .append(" (").append(weather.getUvHarm().getText()).append(")").append("\n")
-            .append("🌡️️ <b>Temperature:</b> ").append(weather.getTemperature()).append("°C\n")
-            .append("📍 <b>Place:</b> ").append(locationInfo.getName()).append("\n\n");
+
+        String aiRecommendation = "";
         if (openaiEnabled) {
-            ChatResponse chatResponse = chatGPTService.getChatResponse(locationInfo);
-            String aiRecommendation = chatResponse.getChoices().get(0).getMessage().getContent();
-            recommendation
-                .append("🤖 <b>AI recommendation:</b> ")
-                .append(aiRecommendation)
-                .append("\n\n");
+            ChatResponse chatResponse = chatGPTService.getChatResponse(locationInfo, userLanguage);
+            aiRecommendation = chatResponse.getChoices().get(0).getMessage().getContent();
         }
-        return recommendation.toString();
+
+        Map<String, Object> valueMap = new HashMap<>();
+        valueMap.put("uvi", weather.getUvi());
+        valueMap.put("uvi_level", weather.getUvHarm().getText());
+        valueMap.put("temperature", weather.getTemperature());
+        valueMap.put("place", locationInfo.getName());
+        valueMap.put("ai_recommendation", aiRecommendation);
+
+        StringSubstitutor stringSubstitutor = new StringSubstitutor(valueMap);
+        String recommendation = i18nProperties.get(userLanguage, "recommendation");
+        return stringSubstitutor.replace(recommendation);
     }
 }

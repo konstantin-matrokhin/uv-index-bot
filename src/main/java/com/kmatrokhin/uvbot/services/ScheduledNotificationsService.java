@@ -46,11 +46,11 @@ public class ScheduledNotificationsService {
                 loc.setLastUvIndex(newIndex);
                 try {
                     telegramClient.execute(SendMessage.builder()
-                            .replyMarkup(uvIndexAbility.mainKeyboard())
-                            .text(recommendationService.createRecommendationText(locationInfo))
-                            .parseMode("html")
-                            .chatId(chatId)
-                            .build()
+                        .replyMarkup(uvIndexAbility.mainKeyboard())
+                        .text(recommendationService.createRecommendationText(locationInfo, userEntity.getLanguage()))
+                        .parseMode("html")
+                        .chatId(chatId)
+                        .build()
                     );
                 } catch (TelegramApiException e) {
                     log.error(e.getMessage());

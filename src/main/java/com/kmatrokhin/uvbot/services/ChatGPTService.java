@@ -5,6 +5,7 @@ import com.kmatrokhin.uvbot.chatgpt.ChatRequest;
 import com.kmatrokhin.uvbot.chatgpt.ChatResponse;
 import com.kmatrokhin.uvbot.dto.LocationInfo;
 import com.kmatrokhin.uvbot.dto.Weather;
+import com.kmatrokhin.uvbot.entities.UserLanguage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,10 +25,11 @@ public class ChatGPTService {
     @Value("${openai.uv.prompt.user}")
     private String userPromptTemplate;
 
-    public ChatResponse getChatResponse(LocationInfo locationInfo) {
+    public ChatResponse getChatResponse(LocationInfo locationInfo, UserLanguage userLanguage) {
         Weather weather = locationInfo.getWeather();
         String userPrompt = String.format(userPromptTemplate, weather.getUvi(), weather.getTemperature(), weather.isDay() ? "день" : "ночь", locationInfo.getName());
-        ChatRequest chatRequest = new ChatRequest(model, systemPrompt, userPrompt);
+        String language = userLanguage.equals(UserLanguage.ENGLISH) ? "английском" : "русском";
+        ChatRequest chatRequest = new ChatRequest(model, systemPrompt.formatted(language), userPrompt);
         String authorizationHeader = "Bearer " + apiKey;
         log.info("Request to ChatGPT: " + chatRequest);
         ChatResponse chatCompletion = chatGPTClient.

@@ -1,8 +1,6 @@
 package com.kmatrokhin.uvbot.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,4 +18,7 @@ public class UserEntity {
     private String name;
     private Boolean isSubscribed;
     private Instant createdAt = Instant.now();
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "lang")
+    private UserLanguage language = UserLanguage.ENGLISH;
 }

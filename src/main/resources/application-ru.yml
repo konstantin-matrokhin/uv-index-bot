@@ -1,7 +1,8 @@
 i18n.dictionary:
-  en:
+  RUSSIAN:
     recommendation: |
-      ☀️ УФ индекс: {uvi} ({uvi_level})
-      🌡️️ Температура: {temperature}°C
-      📍 Место: {place}
-      🤖 Рекомендация ИИ: {ai_recommendation}
+      ☀️<b>УФ индекс</b>: ${uvi} (${uvi_level})
+      🌡️️<b>Температура</b>: ${temperature}°C
+      📍<b>Место</b>: ${place}
+      
+      🤖<b>Рекомендация ИИ</b>: ${ai_recommendation}

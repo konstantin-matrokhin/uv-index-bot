@@ -5,6 +5,7 @@ import com.kmatrokhin.uvbot.dto.LocationInfo;
 import com.kmatrokhin.uvbot.dto.UserSignUp;
 import com.kmatrokhin.uvbot.entities.LocationEntity;
 import com.kmatrokhin.uvbot.entities.UserEntity;
+import com.kmatrokhin.uvbot.entities.UserLanguage;
 import com.kmatrokhin.uvbot.repositories.LocationRepository;
 import com.kmatrokhin.uvbot.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,15 +22,16 @@ public class UserService {
     private final LocationRepository locationRepository;
 
     @Transactional
-    public void signUpOrUpdate(UserSignUp userSignUp) {
+    public UserEntity signUpOrUpdate(UserSignUp userSignUp) {
         Long chatId = userSignUp.getChatId();
         String username = userSignUp.getName();
         LocationInfo locationInfo = userSignUp.getLocationInfo();
 
         Optional<UserEntity> userEntityOpt = userRepository.findByChatId(chatId);
         Coordinates coordinates = locationInfo.getCoordinates();
+        UserEntity userEntity;
         if (userEntityOpt.isPresent()) {
-            UserEntity userEntity = userEntityOpt.get();
+            userEntity = userEntityOpt.get();
             userEntity
                 .setName(username)
                 .setIsSubscribed(true);
@@ -39,7 +41,7 @@ public class UserService {
                 .setLongitude(coordinates.getLongitude())
                 .setLastUvIndex(locationInfo.getWeather().getUvi());
         } else {
-            UserEntity newUser = new UserEntity()
+            userEntity = new UserEntity()
                 .setChatId(chatId)
                 .setName(username)
                 .setIsSubscribed(true)
@@ -49,11 +51,12 @@ public class UserService {
                 .setLatitude(coordinates.getLatitude())
                 .setLongitude(coordinates.getLongitude())
                 .setLastUvIndex(locationInfo.getWeather().getUvi())
-                .setUserEntity(newUser)
+                .setUserEntity(userEntity)
                 .setCreatedAt(Instant.now());
-            userRepository.save(newUser);
+            userRepository.save(userEntity);
             locationRepository.save(newLocation);
         }
+        return userEntity;
     }
 
     @Transactional
@@ -66,4 +69,8 @@ public class UserService {
         return userRepository.findByChatId(chatId).map(UserEntity::getIsSubscribed).orElse(false);
     }
 
+    @Transactional
+    public void setLanguage(Long chatId, UserLanguage language) {
+        userRepository.getByChatId(chatId).setLanguage(language);
+    }
 }
