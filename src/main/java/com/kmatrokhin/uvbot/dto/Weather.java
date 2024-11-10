@@ -17,20 +17,15 @@ public class Weather {
     }
 
     @Getter
+    @RequiredArgsConstructor
     public enum Harm {
-        LOW(2, "Low"),
-        MODERATE(5, "Moderate"),
-        HIGH(7, "High"),
-        VERY_HIGH(10, "Very high"),
-        EXTREME(Float.POSITIVE_INFINITY, "Extreme");
+        LOW(2),
+        MODERATE(5),
+        HIGH(7),
+        VERY_HIGH(10),
+        EXTREME(Float.POSITIVE_INFINITY);
 
         private final float maxUvIndex;
-        private final String text;
-
-        Harm(float maxUvIndex, String text) {
-            this.maxUvIndex = maxUvIndex;
-            this.text = text;
-        }
 
         public static Harm fromIndex(float uvIndex) {
             for (Harm harm : Harm.values()) {

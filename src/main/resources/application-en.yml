@@ -1,8 +1,12 @@
-i18n.dictionary:
-  ENGLISH:
-    recommendation: |
-      ☀️ <b>UV index:</b> ${uvi} (${uvi_level})
-      🌡️️ <b>Temperature:</b> ${temperature}°C
-      📍 <b>Place:</b> ${place}
+i18n.dictionary.ENGLISH:
+  recommendation: |
+    ☀️ <b>UV index:</b> ${uvi} (${uvi_level})
+    🌡️️ <b>Temperature:</b> ${temperature}°C
+    📍 <b>Place:</b> ${place}
 
-      🤖 <b>AI recommendation:</b> ${ai_recommendation}
+    🤖 <b>AI recommendation:</b> ${ai_recommendation}
+  harm_low: Low
+  harm_moderate: Moderate
+  harm_high: High
+  harm_very_high: Very high
+  harm_extreme: Extreme

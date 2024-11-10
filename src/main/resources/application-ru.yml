@@ -1,8 +1,12 @@
-i18n.dictionary:
-  RUSSIAN:
-    recommendation: |
-      ☀️<b>УФ индекс</b>: ${uvi} (${uvi_level})
-      🌡️️<b>Температура</b>: ${temperature}°C
-      📍<b>Место</b>: ${place}
-      
-      🤖<b>Рекомендация ИИ</b>: ${ai_recommendation}
+i18n.dictionary.RUSSIAN:
+  recommendation: |
+    ☀️<b>УФ индекс</b>: ${uvi} (${uvi_level})
+    🌡️️<b>Температура</b>: ${temperature}°C
+    📍<b>Место</b>: ${place}
+    
+    🤖<b>Рекомендация ИИ</b>: ${ai_recommendation}
+  harm_low: Низкий
+  harm_moderate: Умеренный
+  harm_high: Высокий
+  harm_very_high: Очень высоки
+  harm_extreme: Чрезмерный

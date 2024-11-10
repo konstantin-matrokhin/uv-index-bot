@@ -33,7 +33,7 @@ public class RecommendationService {
 
         Map<String, Object> valueMap = new HashMap<>();
         valueMap.put("uvi", weather.getUvi());
-        valueMap.put("uvi_level", weather.getUvHarm().getText());
+        valueMap.put("uvi_level", getHarmText(weather.getUvHarm(), userLanguage));
         valueMap.put("temperature", weather.getTemperature());
         valueMap.put("place", locationInfo.getName());
         valueMap.put("ai_recommendation", aiRecommendation);
@@ -41,5 +41,16 @@ public class RecommendationService {
         StringSubstitutor stringSubstitutor = new StringSubstitutor(valueMap);
         String recommendation = i18nProperties.get(userLanguage, "recommendation");
         return stringSubstitutor.replace(recommendation);
+    }
+
+    private String getHarmText(Weather.Harm harm, UserLanguage userLanguage) {
+        String key = switch (harm) {
+            case LOW -> "harm_low";
+            case MODERATE -> "harm_moderate";
+            case HIGH -> "harm_high";
+            case VERY_HIGH -> "harm_very_high";
+            case EXTREME -> "harm_extreme";
+        };
+        return i18nProperties.get(userLanguage, key);
     }
 }
