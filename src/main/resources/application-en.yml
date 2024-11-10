@@ -10,3 +10,15 @@ i18n.dictionary.ENGLISH:
   harm_high: High
   harm_very_high: Very high
   harm_extreme: Extreme
+  subscribe_button: Subscribe
+  unsubscribe_button: Unsubscribe
+  cannot_send_location: |
+    – In Telegram for Windows, it is not possible to send a location.
+    – To send a location in macOS, manually send it using the button with a paperclip 📎 icon next to the message input field. The button in the bot might not work.
+    Please use a mobile device to send a location.
+  cannot_send_location_button: I can't send location
+  settings_menu_title: What do you want to do?
+  subscribe_reply: Hooray! We will now send notifications when the UV index changes!
+  unsubscribe_reply: You have unsubscribed from notifications 😪 Come back soon to always stay protected from the sun.
+  init_message: Please send a location.
+  main_menu: Welcome! Please send your location.

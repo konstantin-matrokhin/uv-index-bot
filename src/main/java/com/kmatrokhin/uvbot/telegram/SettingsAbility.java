@@ -1,6 +1,9 @@
 package com.kmatrokhin.uvbot.telegram;
 
+import com.kmatrokhin.uvbot.dto.I18nProperties;
+import com.kmatrokhin.uvbot.entities.UserEntity;
 import com.kmatrokhin.uvbot.entities.UserLanguage;
+import com.kmatrokhin.uvbot.repositories.UserRepository;
 import com.kmatrokhin.uvbot.services.UserService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +24,12 @@ import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.getCha
 
 @Service
 @RequiredArgsConstructor
+//@DependsOn("userService")
 public class SettingsAbility implements AbilityExtension {
     private final UvIndexAbility uvIndexAbility;
     private final UserService userService;
+    private final I18nProperties i18nProperties;
+    private final UserRepository userRepository;
 
     @PostConstruct
     public void init() {
@@ -33,55 +39,61 @@ public class SettingsAbility implements AbilityExtension {
     public ReplyFlow unsubscribeFlow() {
         return ReplyFlow.builder(uvIndexAbility.getDB())
             .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("unsubscribe"))
-            .action((bot, update) -> unsubscribe(update)).build();
+            .action((bot, update) -> unsubscribe(update, getLanguage(getChatId(update)))).build();
     }
 
     public ReplyFlow subscribeFlow() {
         return ReplyFlow.builder(uvIndexAbility.getDB())
             .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("subscribe"))
-            .action((bot, update) -> subscribe(update)).build();
+            .action((bot, update) -> subscribe(update, getLanguage(getChatId(update)))).build();
     }
 
-    public void unsubscribe(Update update) {
+    public void unsubscribe(Update update, UserLanguage language) {
         Long chatId = getChatId(update);
         userService.setSubscription(chatId, false);
-        uvIndexAbility.getSilent().send("You have unsubscribed from notifications 😪 Come back soon to always stay protected from the sun", chatId);
+        uvIndexAbility.getSilent().send(i18nProperties.get(language, "unsubscribe_reply"), chatId);
     }
 
-    public void subscribe(Update update) {
+    public void subscribe(Update update, UserLanguage language) {
         Long chatId = getChatId(update);
         userService.setSubscription(chatId, true);
-        uvIndexAbility.getSilent().send("Hooray! We will now send notifications when the UV index changes!", chatId);
+        uvIndexAbility.getSilent().send(i18nProperties.get(language, "subscribe_reply"), chatId);
     }
 
     public ReplyFlow sendSettingsAndHelp() {
         return ReplyFlow.builder(uvIndexAbility.getDB())
             .onlyIf(update -> Flag.TEXT.test(update) && (update.getMessage().getText().contains(SETTINGS_TEXT)))
-            .action((bot, update) -> uvIndexAbility.getSilent()
-                .execute(
+            .action((bot, update) -> {
+                Long chatId = getChatId(update);
+                UserLanguage language = getLanguage(chatId);
+                uvIndexAbility.getSilent().execute(
                     SendMessage.builder()
-                        .chatId(getChatId(update))
-                        .text("What do you want to do?")
-                        .replyMarkup(helpInlineKeyboard(update))
+                        .chatId(chatId)
+                        .text(i18nProperties.get(language, "settings_menu_title"))
+                        .replyMarkup(helpInlineKeyboard(update, language))
                         .build()
-                )
-            )
+                );
+            })
             .build();
     }
 
-    private InlineKeyboardMarkup helpInlineKeyboard(Update update) {
+    private UserLanguage getLanguage(Long chatId) {
+        return userRepository.findByChatId(chatId).map(UserEntity::getLanguage).orElse(UserLanguage.ENGLISH);
+    }
+
+    private InlineKeyboardMarkup helpInlineKeyboard(Update update, UserLanguage language) {
         return InlineKeyboardMarkup.builder().keyboard(List.of(
             new InlineKeyboardRow(
-                userService.isSubscribed(getChatId(update)) ? unsubscribeButton() : subscribeButton()
+                userService.isSubscribed(getChatId(update)) ? unsubscribeButton(language) : subscribeButton(language)
             ),
-            new InlineKeyboardRow(cannotSendLocationButton()),
+            new InlineKeyboardRow(cannotSendLocationButton(language)),
             new InlineKeyboardRow(lang())
         )).build();
     }
 
-    private InlineKeyboardButton cannotSendLocationButton() {
+    private InlineKeyboardButton cannotSendLocationButton(UserLanguage language) {
         return InlineKeyboardButton.builder()
-            .text("Cannot send geolocation")
+            .text(i18nProperties.get(language, "cannot_send_location_button"))
             .callbackData("cannot_send_location")
             .build();
     }
@@ -95,7 +107,7 @@ public class SettingsAbility implements AbilityExtension {
 
     private InlineKeyboardButton lang() {
         return InlineKeyboardButton.builder()
-            .text("🇬🇧 Select language")
+            .text("Language | Язык")
             .callbackData("lang_menu")
             .build();
     }
@@ -103,11 +115,7 @@ public class SettingsAbility implements AbilityExtension {
     public ReplyFlow cannotSendLocation() {
         return ReplyFlow.builder(uvIndexAbility.getDB())
             .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("cannot_send_location"))
-            .action((bot, update) -> uvIndexAbility.getSilent().send("""
-                – In Telegram for Windows, it is not possible to send a location.
-                – To send a location in macOS, manually send it using the button with a paperclip icon next to the message input field. The button in the bot might not work.
-                
-                Use a mobile device to send a location.""", getChatId(update))).build();
+            .action((bot, update) -> uvIndexAbility.getSilent().send(i18nProperties.get(getLanguage(getChatId(update)), "cannot_send_location"), getChatId(update))).build();
     }
 
     public ReplyFlow ourTgChannel() {
@@ -124,7 +132,7 @@ public class SettingsAbility implements AbilityExtension {
                 && update.getCallbackQuery().getData().equalsIgnoreCase("lang_menu")
             ).action((bot, update) -> uvIndexAbility.getSilent().execute(SendMessage.builder()
                 .replyMarkup(langMenu())
-                .text("Choose a language")
+                .text("Choose a language\nВыберите язык")
                 .chatId(getChatId(update))
                 .build()))
             .build();
@@ -139,7 +147,7 @@ public class SettingsAbility implements AbilityExtension {
                     .text("Done!")
                     .chatId(getChatId(update))
                     .build());
-                })
+            })
             .build();
     }
 
@@ -173,17 +181,17 @@ public class SettingsAbility implements AbilityExtension {
     }
 
 
-    public InlineKeyboardButton subscribeButton() {
+    public InlineKeyboardButton subscribeButton(UserLanguage language) {
         return InlineKeyboardButton.builder()
             .callbackData("subscribe")
-            .text("Subscribe")
+            .text(i18nProperties.get(language, "subscribe_button"))
             .build();
     }
 
-    public InlineKeyboardButton unsubscribeButton() {
+    public InlineKeyboardButton unsubscribeButton(UserLanguage language) {
         return InlineKeyboardButton.builder()
             .callbackData("unsubscribe")
-            .text("Unsubscribe")
+            .text(i18nProperties.get(language, "unsubscribe_button"))
             .build();
     }
 

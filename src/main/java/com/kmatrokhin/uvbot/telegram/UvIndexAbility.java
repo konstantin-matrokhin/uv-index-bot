@@ -1,10 +1,12 @@
 package com.kmatrokhin.uvbot.telegram;
 
 import com.kmatrokhin.uvbot.dto.Coordinates;
+import com.kmatrokhin.uvbot.dto.I18nProperties;
 import com.kmatrokhin.uvbot.dto.LocationInfo;
 import com.kmatrokhin.uvbot.dto.UserSignUp;
 import com.kmatrokhin.uvbot.entities.LocationEntity;
 import com.kmatrokhin.uvbot.entities.UserEntity;
+import com.kmatrokhin.uvbot.entities.UserLanguage;
 import com.kmatrokhin.uvbot.repositories.LocationRepository;
 import com.kmatrokhin.uvbot.repositories.UserRepository;
 import com.kmatrokhin.uvbot.services.LocationInfoService;
@@ -49,6 +51,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
     private final UserRepository userRepository;
     private final RecommendationService recommendationService;
     private final LocationRepository locationRepository;
+    private final I18nProperties i18nProperties;
 
     @Value("${telegram.token}")
     private String telegramToken;
@@ -56,14 +59,15 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
     public UvIndexAbility(
         TelegramClient telegramClient, UserService userService,
         LocationInfoService locationInfoService, UserRepository userRepository,
-        RecommendationService recommendationService, LocationRepository locationRepository
-    ) {
+        RecommendationService recommendationService, LocationRepository locationRepository,
+        I18nProperties i18nProperties) {
         super(telegramClient, "uv_advisor_bot", MapDBContext.onlineInstance("uv_bot.db"));
         this.userService = userService;
         this.locationInfoService = locationInfoService;
         this.userRepository = userRepository;
         this.recommendationService = recommendationService;
         this.locationRepository = locationRepository;
+        this.i18nProperties = i18nProperties;
     }
 
     @EventListener
@@ -77,20 +81,21 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
             .action(context -> {
-                if (userRepository.findByChatId(context.chatId()).isEmpty()) {
-                    sendInitMessage(context.update());
+                Optional<UserEntity> user = userRepository.findByChatId(context.chatId());
+                if (user.isEmpty()) {
+                    sendInitMessage(context.update(), UserLanguage.ENGLISH);
                 } else {
-                    showMainMenu(context.update());
+                    showMainMenu(context.update(), user.get().getLanguage());
                 }
             })
             .build();
     }
 
-    public void sendInitMessage(Update update) {
+    public void sendInitMessage(Update update, UserLanguage language) {
         silent.execute(
             SendMessage.builder()
                 .replyMarkup(startKeyboard())
-                .text("Please send a location.")
+                .text(i18nProperties.get(language, "init_message"))
                 .chatId(getChatId(update))
                 .build()
         );
@@ -106,6 +111,10 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             .oneTimeKeyboard(false)
             .resizeKeyboard(true)
             .build();
+    }
+
+    private UserLanguage getLanguage(Long chatId) {
+        return userRepository.findByChatId(chatId).map(UserEntity::getLanguage).orElse(UserLanguage.ENGLISH);
     }
 
     private KeyboardButton manageSubscription() {
@@ -124,11 +133,11 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             .build();
     }
 
-    public void showMainMenu(Update update) {
+    public void showMainMenu(Update update, UserLanguage language) {
         silent.execute(
             SendMessage.builder()
                 .replyMarkup(mainKeyboard())
-                .text("Welcome! Please send your location.")
+                .text(i18nProperties.get(language, "main_menu"))
                 .chatId(getChatId(update))
                 .build()
         );
@@ -175,7 +184,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
                 LocationEntity locationEntity = locationRepository.getByUserEntity(userEntityOpt.get());
                 coordinates = locationEntity.coordinates();
             } else {
-                sendInitMessage(update);
+                sendInitMessage(update, UserLanguage.ENGLISH);
                 return;
             }
         } else {
