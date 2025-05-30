@@ -19,7 +19,7 @@ spring:
     enabled: true
 logging.level.org.telegram.telegrambots: DEBUG
 openai:
-  enabled: true
+  enabled: false
   model: gpt-3.5-turbo
   key: ${OPENAI_APIKEY}
   uv:
