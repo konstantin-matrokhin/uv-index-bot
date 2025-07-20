@@ -28,16 +28,6 @@ public class AdminService implements AbilityExtension {
         uvIndexAbility.addExtension(this);
     }
 
-//    public Ability statsCommand() {
-//        return Ability.builder()
-//            .name("stats")
-//            .locality(Locality.USER)
-//            .privacy(Privacy.CREATOR)
-//            .action(context -> {
-//                stats();
-//            })
-//            .build();
-//    }
 
 
     @EventListener
@@ -65,7 +55,6 @@ public class AdminService implements AbilityExtension {
 
     @Scheduled(cron = "0 0 7 * * *")
     @EventListener(StatsRequestedEvent.class)
-//    @Scheduled(fixedDelay = 100_000, initialDelay = 0)
     public void stats() {
         List<UserEntity> subscribedUsers = userRepository.findSubscribedUsers();
         String usernamesList = subscribedUsers.stream().map(UserEntity::getName).collect(Collectors.joining(", "));

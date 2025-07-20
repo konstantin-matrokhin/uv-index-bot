@@ -35,6 +35,23 @@ out/
 
 ### VS Code ###
 .vscode/
-*.db
 
+### Database ###
+*.db
+*.sqlite
+*.sqlite3
+
+### Environment and Security ###
 .env
+.env.local
+.env.*.local
+application-local.yml
+application-dev.yml
+
+### Logs ###
+*.log
+logs/
+
+### OS ###
+.DS_Store
+Thumbs.db

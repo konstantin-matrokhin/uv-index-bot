@@ -36,7 +36,7 @@ public class RecommendationService {
         valueMap.put("uvi_level", getHarmText(weather.getUvHarm(), userLanguage));
         valueMap.put("temperature", weather.getTemperature());
         valueMap.put("place", locationInfo.getName());
-        valueMap.put("ai_recommendation", aiRecommendation);
+//        valueMap.put("ai_recommendation", aiRecommendation);
 
         StringSubstitutor stringSubstitutor = new StringSubstitutor(valueMap);
         String recommendation = i18nProperties.get(userLanguage, "recommendation");

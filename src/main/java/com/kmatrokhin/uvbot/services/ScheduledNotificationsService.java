@@ -33,7 +33,7 @@ public class ScheduledNotificationsService {
 
     @Transactional
     @Scheduled(cron = "@hourly")
-    public void scheduledNotifications() {
+    public void scheduledNotificationsForUsers() {
         List<LocationEntity> allLocations = locationRepository.findAll();
         log.info("Scheduled updating UV info scheduled for {} locations", allLocations.size());
         for (LocationEntity loc : allLocations) {

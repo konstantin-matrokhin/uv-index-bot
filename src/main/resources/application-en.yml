@@ -3,8 +3,6 @@ i18n.dictionary.ENGLISH:
     ☀️ <b>UV index:</b> ${uvi} (${uvi_level})
     🌡️️ <b>Temperature:</b> ${temperature}°C
     📍 <b>Place:</b> ${place}
-
-    🤖 <b>AI recommendation:</b> ${ai_recommendation}
   harm_low: Low
   harm_moderate: Moderate
   harm_high: High

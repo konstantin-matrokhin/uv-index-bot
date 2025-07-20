@@ -3,9 +3,9 @@ spring:
     web-application-type: none
   application.name: uv-index-bot
   datasource:
-    url: jdbc:postgresql://localhost:5433/uvbot
-    username: postgres
-    password: UvBotPassword6969!
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:uvbot}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD}
     hikari:
       schema: public
   profiles:
