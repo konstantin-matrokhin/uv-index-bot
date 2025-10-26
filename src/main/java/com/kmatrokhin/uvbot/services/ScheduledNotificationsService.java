@@ -42,7 +42,7 @@ public class ScheduledNotificationsService {
                 continue;
             }
             Long chatId = userEntity.getChatId();
-            LocationInfo locationInfo = locationInfoService.getLocationInfo(loc.coordinates());
+            LocationInfo locationInfo = locationInfoService.getLocationInfo(loc.coordinates(), loc.getName());
             float lastUvIndex = loc.getLastUvIndex();
             float newIndex = locationInfo.getWeather().getUvi();
             if (Math.abs(lastUvIndex - newIndex) >= 0.9) {

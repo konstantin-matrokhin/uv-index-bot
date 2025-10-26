@@ -13,8 +13,16 @@ public class LocationInfoService {
     private final GeocodingService geocodingService;
 
     public LocationInfo getLocationInfo(Coordinates coordinates) {
+        return getLocationInfo(coordinates, null);
+    }
+
+    public LocationInfo getLocationInfo(Coordinates coordinates, String locationName) {
         Weather weather = weatherService.getWeather(coordinates);
-        String locationName = geocodingService.getLocationName(coordinates);
+        if (locationName == null) {
+            locationName = geocodingService.getLocationName(coordinates);
+        }
         return new LocationInfo(locationName, coordinates, weather);
     }
+
+
 }

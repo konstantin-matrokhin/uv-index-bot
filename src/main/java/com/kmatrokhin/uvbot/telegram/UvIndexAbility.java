@@ -20,7 +20,11 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.abilitybots.api.bot.AbilityBot;
 import org.telegram.telegrambots.abilitybots.api.db.DBContext;
 import org.telegram.telegrambots.abilitybots.api.db.MapDBContext;
-import org.telegram.telegrambots.abilitybots.api.objects.*;
+import org.telegram.telegrambots.abilitybots.api.objects.Ability;
+import org.telegram.telegrambots.abilitybots.api.objects.Flag;
+import org.telegram.telegrambots.abilitybots.api.objects.Locality;
+import org.telegram.telegrambots.abilitybots.api.objects.Privacy;
+import org.telegram.telegrambots.abilitybots.api.objects.ReplyFlow;
 import org.telegram.telegrambots.abilitybots.api.sender.SilentSender;
 import org.telegram.telegrambots.abilitybots.api.util.AbilityExtension;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
@@ -28,8 +32,8 @@ import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Location;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.location.Location;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
@@ -169,15 +173,17 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             return;
         }
         Long chatId = getChatId(update);
-        Coordinates coordinates;
+        LocationInfo locationInfo;
         if (update.getMessage().hasLocation()) {
             Location location = update.getMessage().getLocation();
-            coordinates = Coordinates.of(location.getLatitude(), location.getLongitude());
+            Coordinates coordinates = Coordinates.of(location.getLatitude(), location.getLongitude());
+            locationInfo = locationInfoService.getLocationInfo(coordinates);
         } else if (isUserMessage(update)) {
             Optional<UserEntity> userEntityOpt = userRepository.findByChatId(chatId);
             if (userEntityOpt.isPresent()) {
                 LocationEntity locationEntity = locationRepository.getByUserEntity(userEntityOpt.get());
-                coordinates = locationEntity.coordinates();
+                Coordinates coordinates = locationEntity.coordinates();
+                locationInfo = locationInfoService.getLocationInfo(coordinates, locationEntity.getName());
             } else {
                 sendInitMessage(update, UserLanguage.ENGLISH);
                 return;
@@ -185,7 +191,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
         } else {
             return;
         }
-        LocationInfo locationInfo = locationInfoService.getLocationInfo(coordinates);
+
         String userName = update.getMessage().getFrom().getUserName();
         UserSignUp userSignUp = new UserSignUp()
             .setName(userName != null ? "@" + userName : update.getMessage().getFrom().getFirstName() + " " + update.getMessage().getFrom().getLastName())
