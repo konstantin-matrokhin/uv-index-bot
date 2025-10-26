@@ -3,8 +3,8 @@ spring:
     web-application-type: none
   application.name: uv-index-bot
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:uvbot}
-    username: ${POSTGRES_USER:postgres}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     hikari:
       schema: public
@@ -17,7 +17,6 @@ spring:
     change-log: classpath:/db/changelog-master.xml
     default-schema: public
     enabled: true
-logging.level.org.telegram.telegrambots: DEBUG
 openai:
   enabled: false
   model: gpt-3.5-turbo
