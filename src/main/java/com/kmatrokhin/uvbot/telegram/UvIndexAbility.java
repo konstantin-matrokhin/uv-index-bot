@@ -12,6 +12,7 @@ import com.kmatrokhin.uvbot.repositories.UserRepository;
 import com.kmatrokhin.uvbot.services.LocationInfoService;
 import com.kmatrokhin.uvbot.services.RecommendationService;
 import com.kmatrokhin.uvbot.services.UserService;
+import io.sentry.Sentry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -76,7 +77,11 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
 
     @EventListener
     public void onStart(ContextRefreshedEvent event) {
-        super.onRegister();
+        try {
+            super.onRegister();
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
     }
 
     public Ability start() {
@@ -91,13 +96,17 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
     }
 
     public void sendInitMessage(Update update, UserLanguage language) {
-        silent.execute(
-            SendMessage.builder()
-                .replyMarkup(startKeyboard())
-                .text(i18nProperties.get(language, "init_message"))
-                .chatId(getChatId(update))
-                .build()
-        );
+        try {
+            silent.execute(
+                SendMessage.builder()
+                    .replyMarkup(startKeyboard())
+                    .text(i18nProperties.get(language, "init_message"))
+                    .chatId(getChatId(update))
+                    .build()
+            );
+        }  catch (Exception e) {
+            Sentry.captureException(e);
+        }
     }
 
     public ReplyKeyboardMarkup mainKeyboard() {
@@ -133,13 +142,17 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
     }
 
     public void showMainMenu(Update update, UserLanguage language) {
-        silent.execute(
-            SendMessage.builder()
-                .replyMarkup(mainKeyboard())
-                .text(i18nProperties.get(language, "main_menu"))
-                .chatId(getChatId(update))
-                .build()
-        );
+        try {
+            silent.execute(
+                SendMessage.builder()
+                    .replyMarkup(mainKeyboard())
+                    .text(i18nProperties.get(language, "main_menu"))
+                    .chatId(getChatId(update))
+                    .build()
+            );
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
     }
 
     public KeyboardButton locationButton() {
@@ -169,49 +182,55 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
     }
 
     private void sendUviMessage(Update update) {
-        if (update.getMessage() == null) {
-            return;
-        }
-        Long chatId = getChatId(update);
-        LocationInfo locationInfo;
-        if (update.getMessage().hasLocation()) {
-            Location location = update.getMessage().getLocation();
-            Coordinates coordinates = Coordinates.of(location.getLatitude(), location.getLongitude());
-            locationInfo = locationInfoService.getLocationInfo(coordinates);
-        } else if (isUserMessage(update)) {
-            Optional<UserEntity> userEntityOpt = userRepository.findByChatId(chatId);
-            if (userEntityOpt.isPresent()) {
-                LocationEntity locationEntity = locationRepository.getByUserEntity(userEntityOpt.get());
-                Coordinates coordinates = locationEntity.coordinates();
-                locationInfo = locationInfoService.getLocationInfo(coordinates, locationEntity.getName());
-            } else {
-                sendInitMessage(update, UserLanguage.ENGLISH);
+        try {
+            if (update.getMessage() == null) {
                 return;
             }
-        } else {
-            return;
-        }
+            Long chatId = getChatId(update);
+            LocationInfo locationInfo;
+            if (update.getMessage().hasLocation()) {
+                Location location = update.getMessage().getLocation();
+                Coordinates coordinates = Coordinates.of(location.getLatitude(), location.getLongitude());
+                locationInfo = locationInfoService.getLocationInfo(coordinates);
+            } else if (isUserMessage(update)) {
+                Optional<UserEntity> userEntityOpt = userRepository.findByChatId(chatId);
+                if (userEntityOpt.isPresent()) {
+                    LocationEntity locationEntity = locationRepository.getByUserEntity(userEntityOpt.get());
+                    Coordinates coordinates = locationEntity.coordinates();
+                    locationInfo = locationInfoService.getLocationInfo(coordinates, locationEntity.getName());
+                } else {
+                    sendInitMessage(update, UserLanguage.ENGLISH);
+                    return;
+                }
+            } else {
+                return;
+            }
 
-        String userName = update.getMessage().getFrom().getUserName();
-        UserSignUp userSignUp = new UserSignUp()
-            .setName(userName != null ? "@" + userName : update.getMessage().getFrom().getFirstName() + " " + update.getMessage().getFrom().getLastName())
-            .setChatId(chatId)
-            .setLocationInfo(locationInfo);
-        UserEntity userEntity = userService.signUpOrUpdate(userSignUp);
+            String userName = update.getMessage().getFrom().getUserName();
+            UserSignUp userSignUp = new UserSignUp()
+                .setName(userName != null ? "@" + userName : update.getMessage()
+                    .getFrom()
+                    .getFirstName() + " " + update.getMessage().getFrom().getLastName())
+                .setChatId(chatId)
+                .setLocationInfo(locationInfo);
+            UserEntity userEntity = userService.signUpOrUpdate(userSignUp);
 
-        silent.execute(
-            SendChatAction.builder()
+            silent.execute(
+                SendChatAction.builder()
+                    .chatId(chatId)
+                    .action(ActionType.TYPING.toString())
+                    .build()
+            );
+            silent.execute(SendMessage.builder()
+                .replyMarkup(mainKeyboard())
+                .text(recommendationService.createRecommendationText(locationInfo, userEntity.getLanguage()))
+                .parseMode("html")
                 .chatId(chatId)
-                .action(ActionType.TYPING.toString())
                 .build()
-        );
-        silent.execute(SendMessage.builder()
-            .replyMarkup(mainKeyboard())
-            .text(recommendationService.createRecommendationText(locationInfo, userEntity.getLanguage()))
-            .parseMode("html")
-            .chatId(chatId)
-            .build()
-        );
+            );
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
     }
 
     @Override

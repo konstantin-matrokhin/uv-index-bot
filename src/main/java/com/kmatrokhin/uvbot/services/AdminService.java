@@ -7,6 +7,7 @@ import com.kmatrokhin.uvbot.events.UserBlockedBotEvent;
 import com.kmatrokhin.uvbot.events.UserRegisteredEvent;
 import com.kmatrokhin.uvbot.repositories.UserRepository;
 import com.kmatrokhin.uvbot.telegram.UvIndexAbility;
+import io.sentry.Sentry;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -28,42 +29,53 @@ public class AdminService implements AbilityExtension {
         uvIndexAbility.addExtension(this);
     }
 
-
-
     @EventListener
     public void onNewUserRegistered(UserRegisteredEvent event) {
-        UserEntity userEntity = event.getUserEntity();
-        LocationEntity locationEntity = event.getLocationEntity();
-        String msg = """
-            ✅ New user registered!
-            Name: %s (id: %s)
-            Location: %s
-            """.formatted(userEntity.getName(), userEntity.getChatId(), locationEntity.getName());
-        uvIndexAbility.getSilent().send(msg, adminChatId());
+        try {
+            UserEntity userEntity = event.getUserEntity();
+            LocationEntity locationEntity = event.getLocationEntity();
+            String msg = """
+                ✅ New user registered!
+                Name: %s (id: %s)
+                Location: %s
+                """.formatted(userEntity.getName(), userEntity.getChatId(), locationEntity.getName());
+            uvIndexAbility.getSilent().send(msg, adminChatId());
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
     }
 
+    @EventListener
     public void onUserBlocked(UserBlockedBotEvent event) {
-        UserEntity userEntity = event.getUserEntity();
-        LocationEntity locationEntity = event.getLocationEntity();
-        String msg = """
-            ❌ User blocked the bot!
-            Name: %s (id: %s)
-            Location: %s
-            """.formatted(userEntity.getName(), userEntity.getChatId(), locationEntity.getName());
-        uvIndexAbility.getSilent().send(msg, adminChatId());
+        try {
+            UserEntity userEntity = event.getUserEntity();
+            LocationEntity locationEntity = event.getLocationEntity();
+            String msg = """
+                ❌ User blocked the bot!
+                Name: %s (id: %s)
+                Location: %s
+                """.formatted(userEntity.getName(), userEntity.getChatId(), locationEntity.getName());
+            uvIndexAbility.getSilent().send(msg, adminChatId());
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
     }
 
     @Scheduled(cron = "0 0 7 * * *")
     @EventListener(StatsRequestedEvent.class)
     public void stats() {
-        List<UserEntity> subscribedUsers = userRepository.findSubscribedUsers();
-        String usernamesList = subscribedUsers.stream().map(UserEntity::getName).collect(Collectors.joining(", "));
-        String msg = """
-            📅 Daily stats:
-            - %s users subscribed
-            - List of users: %s
-            """.formatted(subscribedUsers.size(), usernamesList);
-        uvIndexAbility.getSilent().send(msg, adminChatId());
+        try {
+            List<UserEntity> subscribedUsers = userRepository.findSubscribedUsers();
+            String usernamesList = subscribedUsers.stream().map(UserEntity::getName).collect(Collectors.joining(", "));
+            String msg = """
+                📅 Daily stats:
+                - %s users subscribed
+                - List of users: %s
+                """.formatted(subscribedUsers.size(), usernamesList);
+            uvIndexAbility.getSilent().send(msg, adminChatId());
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
     }
 
     private Long adminChatId() {

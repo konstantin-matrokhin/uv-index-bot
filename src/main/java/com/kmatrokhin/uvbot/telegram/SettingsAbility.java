@@ -5,6 +5,7 @@ import com.kmatrokhin.uvbot.entities.UserEntity;
 import com.kmatrokhin.uvbot.entities.UserLanguage;
 import com.kmatrokhin.uvbot.repositories.UserRepository;
 import com.kmatrokhin.uvbot.services.UserService;
+import io.sentry.Sentry;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,6 @@ import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.getCha
 
 @Service
 @RequiredArgsConstructor
-//@DependsOn("userService")
 public class SettingsAbility implements AbilityExtension {
     private final UvIndexAbility uvIndexAbility;
     private final UserService userService;
@@ -49,30 +49,42 @@ public class SettingsAbility implements AbilityExtension {
     }
 
     public void unsubscribe(Update update, UserLanguage language) {
-        Long chatId = getChatId(update);
-        userService.setSubscription(chatId, false);
-        uvIndexAbility.getSilent().send(i18nProperties.get(language, "unsubscribe_reply"), chatId);
+        try {
+            Long chatId = getChatId(update);
+            userService.setSubscription(chatId, false);
+            uvIndexAbility.getSilent().send(i18nProperties.get(language, "unsubscribe_reply"), chatId);
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
     }
 
     public void subscribe(Update update, UserLanguage language) {
-        Long chatId = getChatId(update);
-        userService.setSubscription(chatId, true);
-        uvIndexAbility.getSilent().send(i18nProperties.get(language, "subscribe_reply"), chatId);
+        try {
+            Long chatId = getChatId(update);
+            userService.setSubscription(chatId, true);
+            uvIndexAbility.getSilent().send(i18nProperties.get(language, "subscribe_reply"), chatId);
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
     }
 
     public ReplyFlow sendSettingsAndHelp() {
         return ReplyFlow.builder(uvIndexAbility.getDB())
             .onlyIf(update -> Flag.TEXT.test(update) && (update.getMessage().getText().contains(SETTINGS_TEXT)))
             .action((bot, update) -> {
-                Long chatId = getChatId(update);
-                UserLanguage language = getLanguage(chatId);
-                uvIndexAbility.getSilent().execute(
-                    SendMessage.builder()
-                        .chatId(chatId)
-                        .text(i18nProperties.get(language, "settings_menu_title"))
-                        .replyMarkup(helpInlineKeyboard(update, language))
-                        .build()
-                );
+                try {
+                    Long chatId = getChatId(update);
+                    UserLanguage language = getLanguage(chatId);
+                    uvIndexAbility.getSilent().execute(
+                        SendMessage.builder()
+                            .chatId(chatId)
+                            .text(i18nProperties.get(language, "settings_menu_title"))
+                            .replyMarkup(helpInlineKeyboard(update, language))
+                            .build()
+                    );
+                } catch (Exception e) {
+                    Sentry.captureException(e);
+                }
             })
             .build();
     }

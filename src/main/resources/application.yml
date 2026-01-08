@@ -37,3 +37,7 @@ openai:
         Местоположение: %s
 telegram:
   token: ${TELEGRAM_TOKEN}
+
+sentry:
+  dsn: https://ef9ae9b029e7e71aefdbc307453a3b91@o4510256847454208.ingest.de.sentry.io/4510256848699472
+  send-default-pii: true

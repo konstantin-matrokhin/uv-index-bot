@@ -36,6 +36,7 @@ dependencies {
     implementation 'org.telegram:telegrambots-springboot-longpolling-starter:9.2.0'
     implementation 'org.telegram:telegrambots-client:9.2.0'
     implementation 'org.telegram:telegrambots-abilities:9.2.0'
+    implementation 'io.sentry:sentry-spring-boot-starter-jakarta:8.29.0'
     compileOnly 'org.projectlombok:lombok:1.18.32'
     annotationProcessor 'org.projectlombok:lombok:1.18.32'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
@@ -46,7 +47,7 @@ dependencies {
 }
 
 ext {
-    set('springCloudVersion', "2023.0.3") // 2022.0.4 is the latest one.
+    set('springCloudVersion', "2023.0.3")
 }
 
 dependencyManagement {
