@@ -12,7 +12,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.Duration;
+import java.util.Locale;
 
 @Service
 @Slf4j
@@ -21,12 +24,21 @@ public class HttpExchangeService {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
+    private static final DecimalFormat DF;
+
+    static {
+        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.US);
+        symbols.setDecimalSeparator('.');
+        DF = new DecimalFormat("0.######", symbols);
+    }
+
     @SneakyThrows
     public JsonNode request(String urlTemplate, Coordinates coordinates) {
         String parameterizedUrl = parameterizeUrl(urlTemplate, coordinates.getLatitude(), coordinates.getLongitude());
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(parameterizedUrl))
             .timeout(Duration.ofSeconds(5))
+            .header("User-Agent", "uv-index-tg-bot/1.1 (konstantin.matrokhin@gmail.com)")
             .GET()
             .build();
         log.info("GET {}", request.uri());
@@ -37,7 +49,9 @@ public class HttpExchangeService {
         return jsonNode;
     }
 
-    private String parameterizeUrl(String urlTemplate, Double lat, Double lon) {
-        return urlTemplate.formatted(lat, lon);
+    private String parameterizeUrl(String template, double lat, double lon) {
+        return template
+            .replace("{lat}", DF.format(lat))
+            .replace("{lon}", DF.format(lon));
     }
 }

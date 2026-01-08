@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class WeatherService {
-    private static final String URL_TEMPLATE = "https://api.open-meteo.com/v1/forecast?latitude=%.6f&longitude=%.6f&current=temperature_2m,is_day,precipitation,rain&hourly=uv_index,uv_index_clear_sky&forecast_days=1&forecast_hours=1";
+    private static final String URL_TEMPLATE = "https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,is_day,precipitation,rain&hourly=uv_index,uv_index_clear_sky&forecast_days=1&forecast_hours=1";
     private final HttpExchangeService httpExchangeService;
 
     @SneakyThrows
