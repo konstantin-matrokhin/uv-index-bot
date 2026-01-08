@@ -33,9 +33,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    implementation 'org.telegram:telegrambots-springboot-longpolling-starter:9.2.0'
-    implementation 'org.telegram:telegrambots-client:9.2.0'
-    implementation 'org.telegram:telegrambots-abilities:9.2.0'
+    implementation 'org.telegram:telegrambots-springboot-longpolling-starter:9.2.1'
+    implementation 'org.telegram:telegrambots-client:9.2.1'
+    implementation 'org.telegram:telegrambots-abilities:9.2.1'
     implementation 'io.sentry:sentry-spring-boot-starter-jakarta:8.29.0'
     compileOnly 'org.projectlombok:lombok:1.18.32'
     annotationProcessor 'org.projectlombok:lombok:1.18.32'
