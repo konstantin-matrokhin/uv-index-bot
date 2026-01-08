@@ -9,11 +9,11 @@ import com.kmatrokhin.uvbot.repositories.UserRepository;
 import com.kmatrokhin.uvbot.telegram.UvIndexAbility;
 import io.sentry.Sentry;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
@@ -32,12 +32,13 @@ public class ScheduledNotificationsService {
     private final UvIndexAbility uvIndexAbility;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    @Transactional
+    @SneakyThrows
     @Scheduled(cron = "@hourly")
     public void scheduledNotificationsForUsers() {
         List<LocationEntity> allLocations = locationRepository.findAll();
         log.info("Scheduled updating UV info scheduled for {} locations", allLocations.size());
         for (LocationEntity loc : allLocations) {
+            Thread.sleep(5_000);
             try {
                 UserEntity userEntity = loc.getUserEntity();
                 if (!userEntity.getIsSubscribed()) {
