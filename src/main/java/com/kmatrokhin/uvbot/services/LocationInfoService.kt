@@ -1,28 +1,25 @@
-package com.kmatrokhin.uvbot.services;
+package com.kmatrokhin.uvbot.services
 
-import com.kmatrokhin.uvbot.dto.Coordinates;
-import com.kmatrokhin.uvbot.dto.LocationInfo;
-import com.kmatrokhin.uvbot.dto.Weather;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.kmatrokhin.uvbot.dto.Coordinates
+import com.kmatrokhin.uvbot.dto.LocationInfo
+import org.springframework.stereotype.Service
 
 @Service
-@RequiredArgsConstructor
-public class LocationInfoService {
-    private final WeatherService weatherService;
-    private final GeocodingService geocodingService;
+class LocationInfoService(
+    private val weatherService: WeatherService,
+    private val geocodingService: GeocodingService
+) {
 
-    public LocationInfo getLocationInfo(Coordinates coordinates) {
-        return getLocationInfo(coordinates, null);
+    fun getLocationInfo(coordinates: Coordinates): LocationInfo {
+        return getLocationInfo(coordinates, null)
     }
 
-    public LocationInfo getLocationInfo(Coordinates coordinates, String locationName) {
-        Weather weather = weatherService.getWeather(coordinates);
+    fun getLocationInfo(coordinates: Coordinates, locationName: String?): LocationInfo {
+        var locationName = locationName
+        val weather = weatherService!!.getWeather(coordinates)
         if (locationName == null) {
-            locationName = geocodingService.getLocationName(coordinates);
+            locationName = geocodingService!!.getLocationName(coordinates)
         }
-        return new LocationInfo(locationName, coordinates, weather);
+        return LocationInfo(locationName!!, coordinates, weather)
     }
-
-
 }

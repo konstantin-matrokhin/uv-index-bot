@@ -1,85 +1,79 @@
-package com.kmatrokhin.uvbot.services;
+package com.kmatrokhin.uvbot.services
 
-import com.kmatrokhin.uvbot.entities.LocationEntity;
-import com.kmatrokhin.uvbot.entities.UserEntity;
-import com.kmatrokhin.uvbot.events.StatsRequestedEvent;
-import com.kmatrokhin.uvbot.events.UserBlockedBotEvent;
-import com.kmatrokhin.uvbot.events.UserRegisteredEvent;
-import com.kmatrokhin.uvbot.repositories.UserRepository;
-import com.kmatrokhin.uvbot.telegram.UvIndexAbility;
-import io.sentry.Sentry;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.abilitybots.api.util.AbilityExtension;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import com.kmatrokhin.uvbot.events.StatsRequestedEvent
+import com.kmatrokhin.uvbot.events.UserBlockedBotEvent
+import com.kmatrokhin.uvbot.events.UserRegisteredEvent
+import com.kmatrokhin.uvbot.repositories.UserRepository
+import com.kmatrokhin.uvbot.telegram.UvIndexAbility
+import io.sentry.Sentry
+import jakarta.annotation.PostConstruct
+import org.springframework.context.event.EventListener
+import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Service
+import org.telegram.telegrambots.abilitybots.api.util.AbilityExtension
 
 @Service
-@RequiredArgsConstructor
-public class AdminService implements AbilityExtension {
-    private final UvIndexAbility uvIndexAbility;
-    private final UserRepository userRepository;
-
+class AdminService(
+    private var uvIndexAbility: UvIndexAbility,
+    private var userRepository: UserRepository
+) : AbilityExtension {
     @PostConstruct
-    public void init() {
-        uvIndexAbility.addExtension(this);
+    fun init() {
+        uvIndexAbility.addExtension(this)
     }
 
     @EventListener
-    public void onNewUserRegistered(UserRegisteredEvent event) {
+    fun onNewUserRegistered(event: UserRegisteredEvent) {
         try {
-            UserEntity userEntity = event.getUserEntity();
-            LocationEntity locationEntity = event.getLocationEntity();
-            String msg = """
+            val userEntity = event.userEntity
+            val locationEntity = event.locationEntity
+            val msg = """
                 ✅ New user registered!
-                Name: %s (id: %s)
-                Location: %s
-                """.formatted(userEntity.getName(), userEntity.getChatId(), locationEntity.getName());
-            uvIndexAbility.getSilent().send(msg, adminChatId());
-        } catch (Exception e) {
-            Sentry.captureException(e);
+                Name: ${userEntity?.name ?: "no name"} (id: ${userEntity?.chatId})
+                Location: ${locationEntity!!.name}
+                """
+            uvIndexAbility.getSilent()?.send(msg, adminChatId())
+        } catch (e: Exception) {
+            Sentry.captureException(e)
         }
     }
 
     @EventListener
-    public void onUserBlocked(UserBlockedBotEvent event) {
+    fun onUserBlocked(event: UserBlockedBotEvent) {
         try {
-            UserEntity userEntity = event.getUserEntity();
-            LocationEntity locationEntity = event.getLocationEntity();
-            String msg = """
+            val userEntity = event.userEntity
+            val locationEntity = event.locationEntity
+            val msg = """
                 ❌ User blocked the bot!
-                Name: %s (id: %s)
-                Location: %s
-                """.formatted(userEntity.getName(), userEntity.getChatId(), locationEntity.getName());
-            uvIndexAbility.getSilent().send(msg, adminChatId());
-        } catch (Exception e) {
-            Sentry.captureException(e);
+                Name: ${userEntity?.name ?: "no name"} (id: ${userEntity?.chatId})
+                Location: ${locationEntity!!.name}
+                """
+            uvIndexAbility!!.getSilent()?.send(msg, adminChatId())
+        } catch (e: Exception) {
+            Sentry.captureException(e)
         }
     }
 
     @Scheduled(cron = "0 0 7 * * *")
-    @EventListener(StatsRequestedEvent.class)
-    public void stats() {
+    @EventListener(StatsRequestedEvent::class)
+    fun stats() {
         try {
-            List<UserEntity> subscribedUsers = userRepository.findSubscribedUsers();
-            String usernamesList = subscribedUsers.stream().map(UserEntity::getName).collect(Collectors.joining(", "));
-            String msg = """
+            val subscribedUsers = userRepository.findSubscribedUsers()
+            val usernamesList =
+                subscribedUsers!!.mapNotNull { it!!.name }.joinToString(", ")
+            val msg = """
                 📅 Daily stats:
-                - %s users subscribed
-                - List of users: %s
-                """.formatted(subscribedUsers.size(), usernamesList);
-            uvIndexAbility.getSilent().send(msg, adminChatId());
-        } catch (Exception e) {
-            Sentry.captureException(e);
+                - ${subscribedUsers.size} users subscribed
+                - List of users: $usernamesList
+                
+                """
+            uvIndexAbility!!.getSilent()?.send(msg, adminChatId())
+        } catch (e: Exception) {
+            Sentry.captureException(e)
         }
     }
 
-    private Long adminChatId() {
-        return uvIndexAbility.creatorId();
+    private fun adminChatId(): Long {
+        return uvIndexAbility!!.creatorId()
     }
-
 }

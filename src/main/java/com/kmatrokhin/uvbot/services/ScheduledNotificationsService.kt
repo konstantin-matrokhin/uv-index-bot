@@ -1,75 +1,80 @@
-package com.kmatrokhin.uvbot.services;
+package com.kmatrokhin.uvbot.services
 
-import com.kmatrokhin.uvbot.dto.LocationInfo;
-import com.kmatrokhin.uvbot.entities.LocationEntity;
-import com.kmatrokhin.uvbot.entities.UserEntity;
-import com.kmatrokhin.uvbot.events.UserBlockedBotEvent;
-import com.kmatrokhin.uvbot.repositories.LocationRepository;
-import com.kmatrokhin.uvbot.repositories.UserRepository;
-import com.kmatrokhin.uvbot.telegram.UvIndexAbility;
-import io.sentry.Sentry;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.meta.generics.TelegramClient;
-
-import java.util.List;
+import com.kmatrokhin.uvbot.entities.LocationEntity
+import com.kmatrokhin.uvbot.events.UserBlockedBotEvent
+import com.kmatrokhin.uvbot.repositories.LocationRepository
+import com.kmatrokhin.uvbot.repositories.UserRepository
+import com.kmatrokhin.uvbot.telegram.UvIndexAbility
+import io.sentry.Sentry
+import lombok.SneakyThrows
+import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Service
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException
+import org.telegram.telegrambots.meta.generics.TelegramClient
+import kotlin.math.abs
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
-public class ScheduledNotificationsService {
-    private final TelegramClient telegramClient;
-    private final LocationRepository locationRepository;
-    private final UserRepository userRepository;
-    private final LocationInfoService locationInfoService;
-    private final RecommendationService recommendationService;
-    private final UvIndexAbility uvIndexAbility;
-    private final ApplicationEventPublisher applicationEventPublisher;
+class ScheduledNotificationsService(
+    private val telegramClient: TelegramClient,
+    private val locationRepository: LocationRepository,
+    private val userRepository: UserRepository,
+    private val locationInfoService: LocationInfoService,
+    private val recommendationService: RecommendationService,
+    private val uvIndexAbility: UvIndexAbility,
+    private val applicationEventPublisher: ApplicationEventPublisher
+) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @SneakyThrows
     @Scheduled(cron = "@hourly")
-    public void scheduledNotificationsForUsers() {
-        List<LocationEntity> allLocations = locationRepository.findAll();
-        log.info("Scheduled updating UV info scheduled for {} locations", allLocations.size());
-        for (LocationEntity loc : allLocations) {
-            Thread.sleep(5_000);
+    fun scheduledNotificationsForUsers() {
+        val allLocations: MutableList<LocationEntity> = locationRepository!!.findAll() as MutableList<LocationEntity>
+        log.info(
+            "Scheduled updating UV info scheduled for {} locations",
+            allLocations.size
+        )
+        for (loc in allLocations) {
+            Thread.sleep(5000)
             try {
-                UserEntity userEntity = loc.getUserEntity();
-                if (!userEntity.isSubscribed()) {
-                    continue;
+                val userEntity = loc.userEntity
+                if (!userEntity!!.isSubscribed!!) {
+                    continue
                 }
-                Long chatId = userEntity.getChatId();
-                LocationInfo locationInfo = locationInfoService.getLocationInfo(loc.coordinates(), loc.getName());
-                float lastUvIndex = loc.getLastUvIndex();
-                float newIndex = locationInfo.getWeather().getUvi();
-                if (Math.abs(lastUvIndex - newIndex) >= 0.9) {
-                    loc.setLastUvIndex(newIndex);
+                val chatId = userEntity.chatId
+                val locationInfo = locationInfoService!!.getLocationInfo(loc.coordinates(), loc.name)
+                val lastUvIndex: Float = loc.lastUvIndex!!
+                val newIndex = locationInfo.weather.uvi
+                if (abs(lastUvIndex - newIndex) >= 0.9) {
+                    loc.lastUvIndex = newIndex
                     try {
-                        telegramClient.execute(SendMessage.builder()
-                            .replyMarkup(uvIndexAbility.mainKeyboard())
-                            .text(recommendationService.createRecommendationText(locationInfo, userEntity.getLanguage()))
-                            .parseMode("html")
-                            .chatId(chatId)
-                            .build()
-                        );
-                    } catch (TelegramApiException e) {
-                        Sentry.captureException(e);
-                        log.error(e.getMessage());
-                        if (e.getMessage().contains("403")) {
-                            applicationEventPublisher.publishEvent(new UserBlockedBotEvent(userEntity, loc));
-                            locationRepository.delete(loc);
-                            userRepository.delete(userEntity);
+                        telegramClient!!.execute(
+                            SendMessage.builder()
+                                .replyMarkup(uvIndexAbility!!.mainKeyboard())
+                                .text(
+                                    recommendationService!!.createRecommendationText(
+                                        locationInfo,
+                                        userEntity.language
+                                    )
+                                )
+                                .parseMode("html")
+                                .chatId(chatId!!)
+                                .build()
+                        )
+                    } catch (e: TelegramApiException) {
+                        Sentry.captureException(e)
+                        log.error(e.message)
+                        if (e.message!!.contains("403")) {
+                            applicationEventPublisher!!.publishEvent(UserBlockedBotEvent(userEntity, loc))
+                            locationRepository.delete(loc)
+                            userRepository!!.delete(userEntity)
                         }
                     }
                 }
-            } catch (Exception e) {
-                Sentry.captureException(e);
+            } catch (e: Exception) {
+                Sentry.captureException(e)
             }
         }
     }

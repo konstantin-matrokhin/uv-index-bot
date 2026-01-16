@@ -1,56 +1,50 @@
-package com.kmatrokhin.uvbot.services;
+package com.kmatrokhin.uvbot.services
 
-import com.kmatrokhin.uvbot.chatgpt.ChatResponse;
-import com.kmatrokhin.uvbot.dto.I18nProperties;
-import com.kmatrokhin.uvbot.dto.LocationInfo;
-import com.kmatrokhin.uvbot.dto.Weather;
-import com.kmatrokhin.uvbot.entities.UserLanguage;
-import lombok.RequiredArgsConstructor;
-import org.apache.commons.text.StringSubstitutor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.kmatrokhin.uvbot.dto.I18nProperties
+import com.kmatrokhin.uvbot.dto.LocationInfo
+import com.kmatrokhin.uvbot.dto.Weather.Harm
+import com.kmatrokhin.uvbot.entities.UserLanguage
+import org.apache.commons.text.StringSubstitutor
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Service
 
 @Service
-@RequiredArgsConstructor
-public class RecommendationService {
-    private final ChatGPTService chatGPTService;
-    private final I18nProperties i18nProperties;
+class RecommendationService(
+    private val chatGPTService: ChatGPTService,
+    private val i18nProperties: I18nProperties
+) {
+    @Value($$"${openai.enabled:true}")
+    private val openaiEnabled = false
 
-    @Value("${openai.enabled:true}")
-    private boolean openaiEnabled;
+    fun createRecommendationText(locationInfo: LocationInfo, userLanguage: UserLanguage): String {
+        val weather = locationInfo.weather
 
-    public String createRecommendationText(LocationInfo locationInfo, UserLanguage userLanguage) {
-        Weather weather = locationInfo.getWeather();
-
-        String aiRecommendation = "";
+        var aiRecommendation = ""
         if (openaiEnabled) {
-            ChatResponse chatResponse = chatGPTService.getChatResponse(locationInfo, userLanguage);
-            aiRecommendation = chatResponse.getChoices().get(0).getMessage().getContent();
+            val chatResponse = chatGPTService!!.getChatResponse(locationInfo, userLanguage)
+            aiRecommendation = chatResponse?.choices?.get(0)?.message?.content ?: ""
         }
 
-        Map<String, Object> valueMap = new HashMap<>();
-        valueMap.put("uvi", weather.getUvi());
-        valueMap.put("uvi_level", getHarmText(weather.getUvHarm(), userLanguage));
-        valueMap.put("temperature", weather.getTemperature());
-        valueMap.put("place", locationInfo.getName());
-//        valueMap.put("ai_recommendation", aiRecommendation);
+        val valueMap: MutableMap<String?, Any?> = HashMap<String?, Any?>()
+        valueMap["uvi"] = weather.uvi
+        valueMap["uvi_level"] = getHarmText(weather.uvHarm, userLanguage)
+        valueMap["temperature"] = weather.temperature
+        valueMap["place"] = locationInfo.name
+        //        valueMap.put("ai_recommendation", aiRecommendation);
 
-        StringSubstitutor stringSubstitutor = new StringSubstitutor(valueMap);
-        String recommendation = i18nProperties.get(userLanguage, "recommendation");
-        return stringSubstitutor.replace(recommendation);
+        val stringSubstitutor = StringSubstitutor(valueMap)
+        val recommendation = i18nProperties!!.get(userLanguage, "recommendation")
+        return stringSubstitutor.replace(recommendation)
     }
 
-    private String getHarmText(Weather.Harm harm, UserLanguage userLanguage) {
-        String key = switch (harm) {
-            case LOW -> "harm_low";
-            case MODERATE -> "harm_moderate";
-            case HIGH -> "harm_high";
-            case VERY_HIGH -> "harm_very_high";
-            case EXTREME -> "harm_extreme";
-        };
-        return i18nProperties.get(userLanguage, key);
+    private fun getHarmText(harm: Harm, userLanguage: UserLanguage): String? {
+        val key = when (harm) {
+            Harm.LOW -> "harm_low"
+            Harm.MODERATE -> "harm_moderate"
+            Harm.HIGH -> "harm_high"
+            Harm.VERY_HIGH -> "harm_very_high"
+            Harm.EXTREME -> "harm_extreme"
+        }
+        return i18nProperties!!.get(userLanguage, key)
     }
 }

@@ -1,79 +1,73 @@
-package com.kmatrokhin.uvbot.services;
+package com.kmatrokhin.uvbot.services
 
-import com.kmatrokhin.uvbot.dto.Coordinates;
-import com.kmatrokhin.uvbot.dto.LocationInfo;
-import com.kmatrokhin.uvbot.dto.UserSignUp;
-import com.kmatrokhin.uvbot.entities.LocationEntity;
-import com.kmatrokhin.uvbot.entities.UserEntity;
-import com.kmatrokhin.uvbot.entities.UserLanguage;
-import com.kmatrokhin.uvbot.events.UserRegisteredEvent;
-import com.kmatrokhin.uvbot.repositories.LocationRepository;
-import com.kmatrokhin.uvbot.repositories.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.util.Optional;
+import com.kmatrokhin.uvbot.dto.UserSignUp
+import com.kmatrokhin.uvbot.entities.LocationEntity
+import com.kmatrokhin.uvbot.entities.UserEntity
+import com.kmatrokhin.uvbot.entities.UserLanguage
+import com.kmatrokhin.uvbot.events.UserRegisteredEvent
+import com.kmatrokhin.uvbot.repositories.LocationRepository
+import com.kmatrokhin.uvbot.repositories.UserRepository
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 @Service
-@RequiredArgsConstructor
-public class UserService {
-    private final UserRepository userRepository;
-    private final LocationRepository locationRepository;
-    private final ApplicationEventPublisher applicationEventPublisher;
-
+class UserService(
+    private val userRepository: UserRepository,
+    private val locationRepository: LocationRepository,
+    private val applicationEventPublisher: ApplicationEventPublisher
+) {
     @Transactional
-    public UserEntity signUpOrUpdate(UserSignUp userSignUp) {
-        Long chatId = userSignUp.getChatId();
-        String username = userSignUp.getName();
-        LocationInfo locationInfo = userSignUp.getLocationInfo();
+    fun signUpOrUpdate(userSignUp: UserSignUp): UserEntity {
+        val chatId = userSignUp.chatId
+        val username = userSignUp.name
+        val locationInfo = userSignUp.locationInfo
 
-        Optional<UserEntity> userEntityOpt = userRepository.findByChatId(chatId);
-        Coordinates coordinates = locationInfo.getCoordinates();
-        UserEntity userEntity;
-        if (userEntityOpt.isPresent()) {
-            userEntity = userEntityOpt.get();
-            userEntity.setName(username);
-            userEntity.setSubscribed(true);
-            LocationEntity locationEntity = locationRepository.getByUserEntity(userEntity);
-            locationEntity.setName(locationInfo.getName());
-            locationEntity.setLatitude(coordinates.getLatitude());
-            locationEntity.setLongitude(coordinates.getLongitude());
-            locationEntity.setLastUvIndex(locationInfo.getWeather().getUvi());
+        val userEntityOpt = userRepository!!.findByChatId(chatId)
+        val coordinates = locationInfo!!.coordinates
+        val userEntity: UserEntity
+        if (userEntityOpt!!.isPresent()) {
+            userEntity = userEntityOpt.get()
+            userEntity.name = username
+            userEntity.isSubscribed = true
+            val locationEntity = locationRepository!!.getByUserEntity(userEntity)
+            locationEntity.name = locationInfo.name
+            locationEntity.latitude = coordinates.latitude
+            locationEntity.longitude = coordinates.longitude
+            locationEntity.lastUvIndex = locationInfo.weather.uvi
         } else {
-            userEntity = new UserEntity();
-            userEntity.setChatId(chatId);
-            userEntity.setName(username);
-            userEntity.setSubscribed(true);
-            userEntity.setCreatedAt(Instant.now());
-            LocationEntity newLocation = new LocationEntity();
-            newLocation.setName(locationInfo.getName());
-            newLocation.setLatitude(coordinates.getLatitude());
-            newLocation.setLongitude(coordinates.getLongitude());
-            newLocation.setLastUvIndex(locationInfo.getWeather().getUvi());
-            newLocation.setUserEntity(userEntity);
-            newLocation.setCreatedAt(Instant.now());
-            userRepository.save(userEntity);
-            locationRepository.save(newLocation);
-            applicationEventPublisher.publishEvent(new UserRegisteredEvent(userEntity, newLocation));
+            userEntity = UserEntity()
+            userEntity.chatId = chatId
+            userEntity.name = username
+            userEntity.isSubscribed = true
+            userEntity.createdAt = Instant.now()
+            val newLocation = LocationEntity()
+            newLocation.name = locationInfo.name
+            newLocation.latitude = coordinates.latitude
+            newLocation.longitude = coordinates.longitude
+            newLocation.lastUvIndex = locationInfo.weather.uvi
+            newLocation.userEntity = userEntity
+            newLocation.createdAt = Instant.now()
+            userRepository.save<UserEntity?>(userEntity)
+            locationRepository!!.save<LocationEntity?>(newLocation)
+            applicationEventPublisher!!.publishEvent(UserRegisteredEvent(userEntity, newLocation))
         }
-        return userEntity;
+        return userEntity
     }
 
     @Transactional
-    public void setSubscription(Long chatId, boolean isSubscribed) {
-        userRepository.getByChatId(chatId).setSubscribed(isSubscribed);
+    fun setSubscription(chatId: Long?, isSubscribed: Boolean) {
+        userRepository!!.getByChatId(chatId).isSubscribed = isSubscribed
     }
 
     @Transactional
-    public boolean isSubscribed(Long chatId) {
-        return userRepository.findByChatId(chatId).map(UserEntity::isSubscribed).orElse(false);
+    fun isSubscribed(chatId: Long?): Boolean {
+        return userRepository!!.findByChatId(chatId)!!.map<Boolean>(UserEntity::isSubscribed).orElse(false)
     }
 
     @Transactional
-    public void setLanguage(Long chatId, UserLanguage language) {
-        userRepository.getByChatId(chatId).setLanguage(language);
+    fun setLanguage(chatId: Long?, language: UserLanguage) {
+        userRepository!!.getByChatId(chatId).language = language
     }
 }

@@ -229,6 +229,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
                 .build()
             );
         } catch (Exception e) {
+            e.printStackTrace();
             Sentry.captureException(e);
         }
     }

@@ -8,10 +8,10 @@ import java.util.*
 
 @Repository
 interface UserRepository : JpaRepository<UserEntity?, UUID?> {
-    fun findByChatId(chatId: Long?): Optional<UserEntity>?
+    fun findByChatId(chatId: Long?): Optional<UserEntity>
 
     fun getByChatId(chatId: Long?): UserEntity {
-        return findByChatId(chatId)!!.orElseThrow()
+        return findByChatId(chatId).orElseThrow()
     }
 
     @Query("from UserEntity u where u.isSubscribed = true")

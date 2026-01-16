@@ -10,7 +10,7 @@ import java.net.http.HttpClient
 
 @Configuration
 class TelegramBeanConfig {
-    @Value("\${telegram.token}")
+    @Value($$"${telegram.token}")
     private lateinit var telegramToken: String
 
     @Bean
