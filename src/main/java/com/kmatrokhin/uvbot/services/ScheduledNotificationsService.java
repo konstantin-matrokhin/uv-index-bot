@@ -41,7 +41,7 @@ public class ScheduledNotificationsService {
             Thread.sleep(5_000);
             try {
                 UserEntity userEntity = loc.getUserEntity();
-                if (!userEntity.getIsSubscribed()) {
+                if (!userEntity.isSubscribed()) {
                     continue;
                 }
                 Long chatId = userEntity.getChatId();

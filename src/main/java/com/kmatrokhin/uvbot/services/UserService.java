@@ -35,27 +35,26 @@ public class UserService {
         UserEntity userEntity;
         if (userEntityOpt.isPresent()) {
             userEntity = userEntityOpt.get();
-            userEntity
-                .setName(username)
-                .setIsSubscribed(true);
-            locationRepository.getByUserEntity(userEntity)
-                .setName(locationInfo.getName())
-                .setLatitude(coordinates.getLatitude())
-                .setLongitude(coordinates.getLongitude())
-                .setLastUvIndex(locationInfo.getWeather().getUvi());
+            userEntity.setName(username);
+            userEntity.setSubscribed(true);
+            LocationEntity locationEntity = locationRepository.getByUserEntity(userEntity);
+            locationEntity.setName(locationInfo.getName());
+            locationEntity.setLatitude(coordinates.getLatitude());
+            locationEntity.setLongitude(coordinates.getLongitude());
+            locationEntity.setLastUvIndex(locationInfo.getWeather().getUvi());
         } else {
-            userEntity = new UserEntity()
-                .setChatId(chatId)
-                .setName(username)
-                .setIsSubscribed(true)
-                .setCreatedAt(Instant.now());
-            LocationEntity newLocation = new LocationEntity()
-                .setName(locationInfo.getName())
-                .setLatitude(coordinates.getLatitude())
-                .setLongitude(coordinates.getLongitude())
-                .setLastUvIndex(locationInfo.getWeather().getUvi())
-                .setUserEntity(userEntity)
-                .setCreatedAt(Instant.now());
+            userEntity = new UserEntity();
+            userEntity.setChatId(chatId);
+            userEntity.setName(username);
+            userEntity.setSubscribed(true);
+            userEntity.setCreatedAt(Instant.now());
+            LocationEntity newLocation = new LocationEntity();
+            newLocation.setName(locationInfo.getName());
+            newLocation.setLatitude(coordinates.getLatitude());
+            newLocation.setLongitude(coordinates.getLongitude());
+            newLocation.setLastUvIndex(locationInfo.getWeather().getUvi());
+            newLocation.setUserEntity(userEntity);
+            newLocation.setCreatedAt(Instant.now());
             userRepository.save(userEntity);
             locationRepository.save(newLocation);
             applicationEventPublisher.publishEvent(new UserRegisteredEvent(userEntity, newLocation));
@@ -65,12 +64,12 @@ public class UserService {
 
     @Transactional
     public void setSubscription(Long chatId, boolean isSubscribed) {
-        userRepository.getByChatId(chatId).setIsSubscribed(isSubscribed);
+        userRepository.getByChatId(chatId).setSubscribed(isSubscribed);
     }
 
     @Transactional
     public boolean isSubscribed(Long chatId) {
-        return userRepository.findByChatId(chatId).map(UserEntity::getIsSubscribed).orElse(false);
+        return userRepository.findByChatId(chatId).map(UserEntity::isSubscribed).orElse(false);
     }
 
     @Transactional

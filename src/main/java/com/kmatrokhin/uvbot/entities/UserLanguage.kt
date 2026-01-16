@@ -1,6 +1,6 @@
-package com.kmatrokhin.uvbot.entities;
+package com.kmatrokhin.uvbot.entities
 
-public enum UserLanguage {
+enum class UserLanguage {
     ENGLISH,
-    RUSSIAN;
+    RUSSIAN
 }

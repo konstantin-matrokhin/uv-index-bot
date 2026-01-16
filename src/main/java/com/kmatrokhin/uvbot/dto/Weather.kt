@@ -1,39 +1,26 @@
-package com.kmatrokhin.uvbot.dto;
+package com.kmatrokhin.uvbot.dto
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-@Getter
-@RequiredArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Weather {
-    private final float uvi;
-    private final float temperature;
-    private final boolean isDay;
+data class Weather(
+    var uvi: Float = 0f,
+    var temperature: Float = 0f,
+    var isDay: Boolean = false
+) {
+    val uvHarm: Harm
+        get() = Harm.fromIndex(uvi)
 
-    public Harm getUvHarm() {
-        return Harm.fromIndex(uvi);
-    }
-
-    @Getter
-    @RequiredArgsConstructor
-    public enum Harm {
-        LOW(2),
-        MODERATE(5),
-        HIGH(7),
-        VERY_HIGH(10),
+    enum class Harm(val thresholdUvIndex: Float) {
+        LOW(2f),
+        MODERATE(5f),
+        HIGH(7f),
+        VERY_HIGH(10f),
         EXTREME(Float.POSITIVE_INFINITY);
 
-        private final float maxUvIndex;
-
-        public static Harm fromIndex(float uvIndex) {
-            for (Harm harm : Harm.values()) {
-                if (uvIndex <= harm.maxUvIndex) {
-                    return harm;
-                }
-            }
-            throw new IllegalArgumentException();
+        companion object {
+            fun fromIndex(uvIndex: Float): Harm =
+                entries.first { uvIndex <= it.thresholdUvIndex }
         }
     }
 }

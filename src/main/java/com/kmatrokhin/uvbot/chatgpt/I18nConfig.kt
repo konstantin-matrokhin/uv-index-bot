@@ -1,10 +1,9 @@
-package com.kmatrokhin.uvbot.chatgpt;
+package com.kmatrokhin.uvbot.chatgpt
 
-import com.kmatrokhin.uvbot.dto.I18nProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import com.kmatrokhin.uvbot.dto.I18nProperties
+import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.annotation.Configuration
 
 @Configuration
-@EnableConfigurationProperties(I18nProperties.class)
-public class I18nConfig {
-}
+@EnableConfigurationProperties(I18nProperties::class)
+class I18nConfig 

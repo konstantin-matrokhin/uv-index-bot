@@ -1,24 +1,20 @@
-package com.kmatrokhin.uvbot.entities;
+package com.kmatrokhin.uvbot.entities
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.time.Instant;
-import java.util.UUID;
+import jakarta.persistence.*
+import java.time.Instant
+import java.util.*
 
 @Entity
 @Table(name = "user", schema = "public")
-@Getter
-@Setter
-public class UserEntity {
+class UserEntity (
     @Id
-    private UUID id = UUID.randomUUID();
-    private Long chatId;
-    private String name;
-    private Boolean isSubscribed;
-    private Instant createdAt = Instant.now();
+    var id: UUID = UUID.randomUUID(),
+    var chatId: Long? = null,
+    var name: String? = null,
+    var isSubscribed: Boolean? = null,
+    var createdAt: Instant? = Instant.now(),
+
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "lang")
-    private UserLanguage language = UserLanguage.ENGLISH;
-}
+    var language: UserLanguage = UserLanguage.ENGLISH
+)

@@ -1,18 +1,16 @@
-package com.kmatrokhin.uvbot.repositories;
+package com.kmatrokhin.uvbot.repositories
 
-import com.kmatrokhin.uvbot.entities.LocationEntity;
-import com.kmatrokhin.uvbot.entities.UserEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-import java.util.Optional;
-import java.util.UUID;
+import com.kmatrokhin.uvbot.entities.LocationEntity
+import com.kmatrokhin.uvbot.entities.UserEntity
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
+import java.util.*
 
 @Repository
-public interface LocationRepository extends JpaRepository<LocationEntity, UUID> {
-    Optional<LocationEntity> findByUserEntity(UserEntity userEntity);
+interface LocationRepository : JpaRepository<LocationEntity?, UUID?> {
+    fun findByUserEntity(userEntity: UserEntity?): Optional<LocationEntity>?
 
-    default LocationEntity getByUserEntity(UserEntity userEntity) {
-        return findByUserEntity(userEntity).orElseThrow();
+    fun getByUserEntity(userEntity: UserEntity?): LocationEntity {
+        return findByUserEntity(userEntity)!!.orElseThrow()
     }
 }

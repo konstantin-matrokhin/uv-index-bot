@@ -207,12 +207,12 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             }
 
             String userName = update.getMessage().getFrom().getUserName();
-            UserSignUp userSignUp = new UserSignUp()
-                .setName(userName != null ? "@" + userName : update.getMessage()
+            UserSignUp userSignUp = new UserSignUp();
+            userSignUp.setName(userName != null ? "@" + userName : update.getMessage()
                     .getFrom()
-                    .getFirstName() + " " + update.getMessage().getFrom().getLastName())
-                .setChatId(chatId)
-                .setLocationInfo(locationInfo);
+                    .getFirstName() + " " + update.getMessage().getFrom().getLastName());
+            userSignUp.setChatId(chatId);
+            userSignUp.setLocationInfo(locationInfo);
             UserEntity userEntity = userService.signUpOrUpdate(userSignUp);
 
             silent.execute(

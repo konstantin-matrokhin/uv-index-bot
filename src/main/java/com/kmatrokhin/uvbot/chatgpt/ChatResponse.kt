@@ -1,25 +1,14 @@
-package com.kmatrokhin.uvbot.chatgpt;
+package com.kmatrokhin.uvbot.chatgpt
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-import java.util.List;
-
-@Getter
-@Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
-@ToString
-public class ChatResponse {
-    private List<Choice> choices;
-
-    @Getter
-    @Setter
+data class ChatResponse(
+    var choices: List<Choice>
+) {
     @JsonIgnoreProperties(ignoreUnknown = true)
-    @ToString
-    public static class Choice {
-        private int index;
-        private Message message;
-    }
+    data class Choice(
+        var index: Int = 0,
+        var message: Message
+    )
 }

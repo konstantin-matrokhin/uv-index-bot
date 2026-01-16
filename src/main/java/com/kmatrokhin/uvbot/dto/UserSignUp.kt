@@ -1,12 +1,7 @@
-package com.kmatrokhin.uvbot.dto;
+package com.kmatrokhin.uvbot.dto
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-public class UserSignUp {
-    private Long chatId;
-    private String name;
-    private LocationInfo locationInfo;
-}
+data class UserSignUp (
+    var chatId: Long? = null,
+    var name: String? = null,
+    var locationInfo: LocationInfo? = null
+)

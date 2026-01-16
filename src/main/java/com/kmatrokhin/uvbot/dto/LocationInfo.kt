@@ -1,14 +1,7 @@
-package com.kmatrokhin.uvbot.dto;
+package com.kmatrokhin.uvbot.dto
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-@AllArgsConstructor
-public class LocationInfo {
-    private String name;
-    private Coordinates coordinates;
-    private Weather weather;
-}
+data class LocationInfo (
+    var name: String,
+    var coordinates: Coordinates,
+    var weather: Weather
+)

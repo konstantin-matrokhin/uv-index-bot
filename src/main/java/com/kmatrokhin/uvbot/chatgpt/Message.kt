@@ -1,15 +1,9 @@
-package com.kmatrokhin.uvbot.chatgpt;
+package com.kmatrokhin.uvbot.chatgpt
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Message {
-    private String role;
-    private String content;
-}
+data class Message (
+    var role: String,
+    var content: String
+)

@@ -1,25 +1,16 @@
-package com.kmatrokhin.uvbot.chatgpt;
+package com.kmatrokhin.uvbot.chatgpt
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+data class ChatRequest(
+    val model: String?,
+    val sysPrompt: String,
+    val userPrompt: String
+) {
+    var messages: MutableList<Message?> = ArrayList()
+    val n = 1
+    val temperature = 1.2
 
-import java.util.ArrayList;
-import java.util.List;
-
-@Getter
-@Setter
-@ToString
-public class ChatRequest {
-    private String model;
-    private List<Message> messages;
-    private int n = 1;
-    private double temperature = 1.2;
-
-    public ChatRequest(String model, String sysPrompt, String userPrompt) {
-        this.model = model;
-        this.messages = new ArrayList<>();
-        this.messages.add(new Message("system", sysPrompt));
-        this.messages.add(new Message("user", userPrompt));
+    init {
+        this.messages.add(Message("system", sysPrompt))
+        this.messages.add(Message("user", userPrompt))
     }
 }

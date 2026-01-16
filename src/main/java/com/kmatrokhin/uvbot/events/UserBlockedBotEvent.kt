@@ -1,13 +1,9 @@
-package com.kmatrokhin.uvbot.events;
+package com.kmatrokhin.uvbot.events
 
-import com.kmatrokhin.uvbot.entities.LocationEntity;
-import com.kmatrokhin.uvbot.entities.UserEntity;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import com.kmatrokhin.uvbot.entities.LocationEntity
+import com.kmatrokhin.uvbot.entities.UserEntity
 
-@RequiredArgsConstructor
-@Getter
-public class UserBlockedBotEvent {
-    private final UserEntity userEntity;
-    private final LocationEntity locationEntity;
-}
+data class UserBlockedBotEvent (
+    val userEntity: UserEntity? = null,
+    val locationEntity: LocationEntity? = null
+)

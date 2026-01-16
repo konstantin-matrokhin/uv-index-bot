@@ -1,4 +1,3 @@
-package com.kmatrokhin.uvbot.events;
+package com.kmatrokhin.uvbot.events
 
-public class StatsRequestedEvent {
-}
+class StatsRequestedEvent 

@@ -1,30 +1,26 @@
-package com.kmatrokhin.uvbot.entities;
+package com.kmatrokhin.uvbot.entities
 
-import com.kmatrokhin.uvbot.dto.Coordinates;
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.time.Instant;
-import java.util.UUID;
+import com.kmatrokhin.uvbot.dto.Coordinates
+import com.kmatrokhin.uvbot.dto.Coordinates.Companion.of
+import jakarta.persistence.*
+import java.time.Instant
+import java.util.*
 
 @Entity
 @Table(name = "location")
-@Getter
-@Setter
-public class LocationEntity {
+class LocationEntity(
     @Id
-    private UUID id = UUID.randomUUID();
-    private Double latitude;
-    private Double longitude;
+    var id: UUID = UUID.randomUUID(),
+    var latitude: Double? = null,
+    var longitude: Double? = null,
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private UserEntity userEntity;
-    private String name;
-    private Float lastUvIndex;
-    private Instant createdAt = Instant.now();
-
-    public Coordinates coordinates() {
-        return Coordinates.of(latitude, longitude);
+    var userEntity: UserEntity? = null,
+    var name: String? = null,
+    var lastUvIndex: Float? = null,
+    var createdAt: Instant? = Instant.now()
+) {
+    fun coordinates(): Coordinates {
+        return of(latitude, longitude)
     }
 }

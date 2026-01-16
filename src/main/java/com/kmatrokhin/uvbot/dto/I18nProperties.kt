@@ -1,21 +1,15 @@
-package com.kmatrokhin.uvbot.dto;
+package com.kmatrokhin.uvbot.dto
 
-import com.kmatrokhin.uvbot.entities.UserLanguage;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
-
-import java.util.Map;
+import com.kmatrokhin.uvbot.entities.UserLanguage
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.stereotype.Component
 
 @Component
-@Getter
-@Setter
 @ConfigurationProperties(prefix = "i18n")
-public class I18nProperties {
-    private Map<String, Map<String, String>> dictionary;
+class I18nProperties {
+    var dictionary: Map<String, Map<String, String>> = emptyMap()
 
-    public String get(UserLanguage userLanguage, String key) {
-        return dictionary.get(userLanguage.toString()).get(key);
+    fun get(userLanguage: UserLanguage, key: String): String? {
+        return dictionary[userLanguage.name]?.get(key)
     }
 }
