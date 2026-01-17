@@ -1,211 +1,251 @@
-package com.kmatrokhin.uvbot.telegram;
+package com.kmatrokhin.uvbot.telegram
 
-import com.kmatrokhin.uvbot.dto.I18nProperties;
-import com.kmatrokhin.uvbot.entities.UserEntity;
-import com.kmatrokhin.uvbot.entities.UserLanguage;
-import com.kmatrokhin.uvbot.repositories.UserRepository;
-import com.kmatrokhin.uvbot.services.UserService;
-import io.sentry.Sentry;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.abilitybots.api.objects.Flag;
-import org.telegram.telegrambots.abilitybots.api.objects.ReplyFlow;
-import org.telegram.telegrambots.abilitybots.api.util.AbilityExtension;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
-
-import java.util.List;
-import java.util.Optional;
-
-import static com.kmatrokhin.uvbot.telegram.UvIndexAbility.SETTINGS_TEXT;
-import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.getChatId;
+import com.kmatrokhin.uvbot.dto.I18nProperties
+import com.kmatrokhin.uvbot.entities.UserEntity
+import com.kmatrokhin.uvbot.entities.UserLanguage
+import com.kmatrokhin.uvbot.repositories.UserRepository
+import com.kmatrokhin.uvbot.services.UserService
+import io.sentry.Sentry
+import jakarta.annotation.PostConstruct
+import lombok.RequiredArgsConstructor
+import org.springframework.stereotype.Service
+import org.telegram.telegrambots.abilitybots.api.bot.BaseAbilityBot
+import org.telegram.telegrambots.abilitybots.api.objects.Flag
+import org.telegram.telegrambots.abilitybots.api.objects.ReplyFlow
+import org.telegram.telegrambots.abilitybots.api.util.AbilityExtension
+import org.telegram.telegrambots.abilitybots.api.util.AbilityUtils
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.objects.Update
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
+import java.util.*
 
 @Service
 @RequiredArgsConstructor
-public class SettingsAbility implements AbilityExtension {
-    private final UvIndexAbility uvIndexAbility;
-    private final UserService userService;
-    private final I18nProperties i18nProperties;
-    private final UserRepository userRepository;
+class SettingsAbility(
+    private val uvIndexAbility: UvIndexAbility,
+    private val userService: UserService,
+    private val i18nProperties: I18nProperties,
+    private val userRepository: UserRepository
+) : AbilityExtension {
 
     @PostConstruct
-    public void init() {
-        uvIndexAbility.addExtension(this);
+    fun init() {
+        uvIndexAbility.addExtension(this)
     }
 
-    public ReplyFlow unsubscribeFlow() {
-        return ReplyFlow.builder(uvIndexAbility.getDB())
-            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("unsubscribe"))
-            .action((bot, update) -> unsubscribe(update, getLanguage(getChatId(update)))).build();
+    fun unsubscribeFlow(): ReplyFlow {
+        return ReplyFlow.builder(uvIndexAbility.dB)
+            .onlyIf { update: Update ->
+                Flag.CALLBACK_QUERY.test(update) && update.callbackQuery.data
+                    .equals("unsubscribe", ignoreCase = true)
+            }
+            .action { _: BaseAbilityBot, update: Update ->
+                unsubscribe(
+                    update,
+                    getLanguage(AbilityUtils.getChatId(update))
+                )
+            }.build()
     }
 
-    public ReplyFlow subscribeFlow() {
-        return ReplyFlow.builder(uvIndexAbility.getDB())
-            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("subscribe"))
-            .action((bot, update) -> subscribe(update, getLanguage(getChatId(update)))).build();
+    fun subscribeFlow(): ReplyFlow {
+        return ReplyFlow.builder(uvIndexAbility.dB)
+            .onlyIf { update: Update ->
+                Flag.CALLBACK_QUERY.test(update) && update.callbackQuery.data
+                    .equals("subscribe", ignoreCase = true)
+            }
+            .action { _: BaseAbilityBot, update: Update ->
+                subscribe(
+                    update,
+                    getLanguage(AbilityUtils.getChatId(update))
+                )
+            }.build()
     }
 
-    public void unsubscribe(Update update, UserLanguage language) {
+    fun unsubscribe(update: Update, language: UserLanguage) {
         try {
-            Long chatId = getChatId(update);
-            userService.setSubscription(chatId, false);
-            uvIndexAbility.getSilent().send(i18nProperties.get(language, "unsubscribe_reply"), chatId);
-        } catch (Exception e) {
-            Sentry.captureException(e);
+            val chatId = AbilityUtils.getChatId(update)
+            userService.setSubscription(chatId, false)
+            uvIndexAbility.getSilent().send(i18nProperties.get(language, "unsubscribe_reply"), chatId)
+        } catch (e: Exception) {
+            Sentry.captureException(e)
         }
     }
 
-    public void subscribe(Update update, UserLanguage language) {
+    fun subscribe(update: Update, language: UserLanguage) {
         try {
-            Long chatId = getChatId(update);
-            userService.setSubscription(chatId, true);
-            uvIndexAbility.getSilent().send(i18nProperties.get(language, "subscribe_reply"), chatId);
-        } catch (Exception e) {
-            Sentry.captureException(e);
+            val chatId = AbilityUtils.getChatId(update)
+            userService.setSubscription(chatId, true)
+            uvIndexAbility.getSilent().send(i18nProperties.get(language, "subscribe_reply"), chatId)
+        } catch (e: Exception) {
+            Sentry.captureException(e)
         }
     }
 
-    public ReplyFlow sendSettingsAndHelp() {
-        return ReplyFlow.builder(uvIndexAbility.getDB())
-            .onlyIf(update -> Flag.TEXT.test(update) && (update.getMessage().getText().contains(SETTINGS_TEXT)))
-            .action((bot, update) -> {
+    fun sendSettingsAndHelp(): ReplyFlow {
+        return ReplyFlow.builder(uvIndexAbility.dB)
+            .onlyIf { update: Update ->
+                Flag.TEXT.test(update) && (update.message.text
+                    .contains(UvIndexAbility.SETTINGS_TEXT))
+            }
+            .action { bot: BaseAbilityBot, update: Update ->
                 try {
-                    Long chatId = getChatId(update);
-                    UserLanguage language = getLanguage(chatId);
+                    val chatId = AbilityUtils.getChatId(update)
+                    val language = getLanguage(chatId)
                     uvIndexAbility.getSilent().execute(
                         SendMessage.builder()
                             .chatId(chatId)
                             .text(i18nProperties.get(language, "settings_menu_title"))
                             .replyMarkup(helpInlineKeyboard(update, language))
                             .build()
-                    );
-                } catch (Exception e) {
-                    Sentry.captureException(e);
+                    )
+                } catch (e: Exception) {
+                    Sentry.captureException(e)
                 }
-            })
-            .build();
+            }
+            .build()
     }
 
-    private UserLanguage getLanguage(Long chatId) {
-        return Optional.ofNullable(userRepository.findByChatId(chatId)).map(UserEntity::getLanguage).orElse(UserLanguage.ENGLISH);
+    private fun getLanguage(chatId: Long): UserLanguage {
+        return Optional.ofNullable<UserEntity>(userRepository.findByChatId(chatId))
+            .map(UserEntity::language).orElse(UserLanguage.ENGLISH)
     }
 
-    private InlineKeyboardMarkup helpInlineKeyboard(Update update, UserLanguage language) {
-        return InlineKeyboardMarkup.builder().keyboard(List.of(
-            new InlineKeyboardRow(
-                userService.isSubscribed(getChatId(update)) ? unsubscribeButton(language) : subscribeButton(language)
-            ),
-            new InlineKeyboardRow(cannotSendLocationButton(language)),
-            new InlineKeyboardRow(lang())
-        )).build();
+    private fun helpInlineKeyboard(update: Update, language: UserLanguage): InlineKeyboardMarkup {
+        return InlineKeyboardMarkup.builder().keyboard(
+            listOf(
+                InlineKeyboardRow(
+                    if (userService.isSubscribed(AbilityUtils.getChatId(update))) unsubscribeButton(language) else subscribeButton(
+                        language
+                    )
+                ),
+                InlineKeyboardRow(cannotSendLocationButton(language)),
+                InlineKeyboardRow(lang())
+            )
+        ).build()
     }
 
-    private InlineKeyboardButton cannotSendLocationButton(UserLanguage language) {
+    private fun cannotSendLocationButton(language: UserLanguage): InlineKeyboardButton {
         return InlineKeyboardButton.builder()
             .text(i18nProperties.get(language, "cannot_send_location_button"))
             .callbackData("cannot_send_location")
-            .build();
+            .build()
     }
 
-    private InlineKeyboardButton ourTgChannelButton() {
+    private fun ourTgChannelButton(): InlineKeyboardButton {
         return InlineKeyboardButton.builder()
             .text("Out telegram channel")
             .callbackData("our_tg_channel")
-            .build();
+            .build()
     }
 
-    private InlineKeyboardButton lang() {
+    private fun lang(): InlineKeyboardButton {
         return InlineKeyboardButton.builder()
             .text("Language | Язык")
-            .callbackData("lang_menu")  
-            .build();
+            .callbackData("lang_menu")
+            .build()
     }
 
-    public ReplyFlow cannotSendLocation() {
-        return ReplyFlow.builder(uvIndexAbility.getDB())
-            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("cannot_send_location"))
-            .action((bot, update) -> uvIndexAbility.getSilent().send(i18nProperties.get(getLanguage(getChatId(update)), "cannot_send_location"), getChatId(update))).build();
+    fun cannotSendLocation(): ReplyFlow {
+        return ReplyFlow.builder(uvIndexAbility.dB)
+            .onlyIf { update: Update ->
+                Flag.CALLBACK_QUERY.test(update) && update.callbackQuery.data
+                    .equals("cannot_send_location", ignoreCase = true)
+            }
+            .action { _: BaseAbilityBot, update: Update ->
+                uvIndexAbility.getSilent().send(
+                    i18nProperties.get(getLanguage(AbilityUtils.getChatId(update)), "cannot_send_location"),
+                    AbilityUtils.getChatId(update)
+                )
+            }.build()
     }
 
-    public ReplyFlow ourTgChannel() {
-        return ReplyFlow.builder(uvIndexAbility.getDB())
-            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("our_tg_channel"))
-            .action((bot, update) -> uvIndexAbility.getSilent().send("""
-                Our telegram channel: @muskrat_dev
-                """, getChatId(update))).build();
+    fun langMenuCallback(): ReplyFlow {
+        return ReplyFlow.builder(uvIndexAbility.dB)
+            .onlyIf { update: Update ->
+                Flag.CALLBACK_QUERY.test(update)
+                        && update.callbackQuery.data.equals("lang_menu", ignoreCase = true)
+            }.action { _: BaseAbilityBot, update: Update ->
+                uvIndexAbility.getSilent().execute(
+                    SendMessage.builder()
+                        .replyMarkup(langMenu())
+                        .text("Choose a language\nВыберите язык")
+                        .chatId(AbilityUtils.getChatId(update))
+                        .build()
+                )
+            }
+            .build()
     }
 
-    public ReplyFlow langMenuCallback() {
-        return ReplyFlow.builder(uvIndexAbility.getDB())
-            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update)
-                && update.getCallbackQuery().getData().equalsIgnoreCase("lang_menu")
-            ).action((bot, update) -> uvIndexAbility.getSilent().execute(SendMessage.builder()
-                .replyMarkup(langMenu())
-                .text("Choose a language\nВыберите язык")
-                .chatId(getChatId(update))
-                .build()))
-            .build();
+    fun langSelectEnCallback(): ReplyFlow {
+        return ReplyFlow.builder(uvIndexAbility.dB)
+            .onlyIf { update: Update ->
+                Flag.CALLBACK_QUERY.test(update) && update.callbackQuery.data
+                    .equals("lang_en", ignoreCase = true)
+            }
+            .action { bot: BaseAbilityBot, update: Update ->
+                userService.setLanguage(AbilityUtils.getChatId(update), UserLanguage.ENGLISH)
+                uvIndexAbility.getSilent().execute(
+                    SendMessage.builder()
+                        .text("Done!")
+                        .chatId(AbilityUtils.getChatId(update))
+                        .build()
+                )
+            }
+            .build()
     }
 
-    public ReplyFlow langSelectEnCallback() {
-        return ReplyFlow.builder(uvIndexAbility.getDB())
-            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("lang_en"))
-            .action((bot, update) -> {
-                userService.setLanguage(getChatId(update), UserLanguage.ENGLISH);
-                uvIndexAbility.getSilent().execute(SendMessage.builder()
-                    .text("Done!")
-                    .chatId(getChatId(update))
-                    .build());
-            })
-            .build();
+    fun langSelectRuCallback(): ReplyFlow {
+        return ReplyFlow.builder(uvIndexAbility.dB)
+            .onlyIf { update: Update ->
+                Flag.CALLBACK_QUERY.test(update) && update.callbackQuery.data
+                    .equals("lang_ru", ignoreCase = true)
+            }
+            .action { _: BaseAbilityBot, update: Update ->
+                userService.setLanguage(AbilityUtils.getChatId(update), UserLanguage.RUSSIAN)
+                uvIndexAbility.getSilent().execute(
+                    SendMessage.builder()
+                        .text("Готово!")
+                        .chatId(AbilityUtils.getChatId(update))
+                        .build()
+                )
+            }
+            .build()
     }
 
-    public ReplyFlow langSelectRuCallback() {
-        return ReplyFlow.builder(uvIndexAbility.getDB())
-            .onlyIf(update -> Flag.CALLBACK_QUERY.test(update) && update.getCallbackQuery().getData().equalsIgnoreCase("lang_ru"))
-            .action((bot, update) -> {
-                userService.setLanguage(getChatId(update), UserLanguage.RUSSIAN);
-                uvIndexAbility.getSilent().execute(SendMessage.builder()
-                    .text("Готово!")
-                    .chatId(getChatId(update))
-                    .build());
-            })
-            .build();
-    }
-
-    public InlineKeyboardMarkup langMenu() {
+    fun langMenu(): InlineKeyboardMarkup {
         return InlineKeyboardMarkup.builder()
-            .keyboard(List.of(new InlineKeyboardRow(
-                InlineKeyboardButton.builder()
-                    .text("🇬🇧 English")
-                    .callbackData("lang_en")
-                    .build()
-            ), new InlineKeyboardRow(
-                InlineKeyboardButton.builder()
-                    .text("🇷🇺 Russian")
-                    .callbackData("lang_ru")
-                    .build()
-            )))
-            .build();
+            .keyboard(
+                listOf(
+                    InlineKeyboardRow(
+                        InlineKeyboardButton.builder()
+                            .text("🇬🇧 English")
+                            .callbackData("lang_en")
+                            .build()
+                    ), InlineKeyboardRow(
+                        InlineKeyboardButton.builder()
+                            .text("🇷🇺 Russian")
+                            .callbackData("lang_ru")
+                            .build()
+                    )
+                )
+            )
+            .build()
     }
 
 
-    public InlineKeyboardButton subscribeButton(UserLanguage language) {
+    fun subscribeButton(language: UserLanguage): InlineKeyboardButton {
         return InlineKeyboardButton.builder()
             .callbackData("subscribe")
             .text(i18nProperties.get(language, "subscribe_button"))
-            .build();
+            .build()
     }
 
-    public InlineKeyboardButton unsubscribeButton(UserLanguage language) {
+    fun unsubscribeButton(language: UserLanguage): InlineKeyboardButton {
         return InlineKeyboardButton.builder()
             .callbackData("unsubscribe")
             .text(i18nProperties.get(language, "unsubscribe_button"))
-            .build();
+            .build()
     }
-
 }
