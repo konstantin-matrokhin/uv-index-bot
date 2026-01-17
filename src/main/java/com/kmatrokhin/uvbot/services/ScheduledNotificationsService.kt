@@ -1,6 +1,5 @@
 package com.kmatrokhin.uvbot.services
 
-import com.kmatrokhin.uvbot.entities.LocationEntity
 import com.kmatrokhin.uvbot.events.UserBlockedBotEvent
 import com.kmatrokhin.uvbot.repositories.LocationRepository
 import com.kmatrokhin.uvbot.repositories.UserRepository
@@ -29,7 +28,7 @@ class ScheduledNotificationsService(
 
     @Scheduled(cron = "@hourly")
     fun scheduledNotificationsForUsers() {
-        val allLocations: List<LocationEntity> = locationRepository.findAll() as List<LocationEntity>
+        val allLocations = locationRepository.findAll()
         log.info(
             "Scheduled updating UV info scheduled for {} locations",
             allLocations.size
@@ -41,9 +40,8 @@ class ScheduledNotificationsService(
                 if (!userEntity.isSubscribed) {
                     continue
                 }
-                val chatId = userEntity.chatId
                 val locationInfo = locationInfoService.getLocationInfo(loc.coordinates(), loc.name)
-                val lastUvIndex: Float = loc.lastUvIndex!!
+                val lastUvIndex: Float = loc.lastUvIndex ?: 0f
                 val newIndex = locationInfo.weather.uvi
                 if (abs(lastUvIndex - newIndex) >= 0.9) {
                     loc.lastUvIndex = newIndex
@@ -58,7 +56,7 @@ class ScheduledNotificationsService(
                                     )
                                 )
                                 .parseMode("html")
-                                .chatId(chatId)
+                                .chatId(userEntity.chatId)
                                 .build()
                         )
                     } catch (e: TelegramApiException) {

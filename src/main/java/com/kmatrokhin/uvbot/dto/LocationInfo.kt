@@ -1,7 +1,7 @@
 package com.kmatrokhin.uvbot.dto
 
 data class LocationInfo (
-    var name: String,
-    var coordinates: Coordinates,
-    var weather: Weather
+    val name: String,
+    val coordinates: Coordinates,
+    val weather: Weather
 )

@@ -5,15 +5,11 @@ import com.kmatrokhin.uvbot.chatgpt.ChatRequest
 import com.kmatrokhin.uvbot.chatgpt.ChatResponse
 import com.kmatrokhin.uvbot.dto.LocationInfo
 import com.kmatrokhin.uvbot.entities.UserLanguage
-import lombok.RequiredArgsConstructor
-import lombok.extern.slf4j.Slf4j
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 class ChatGPTService(
     private var chatGPTClient: ChatGPTClient
 ) {
@@ -21,10 +17,10 @@ class ChatGPTService(
 
 
     @Value("\${openai.key}")
-    private val apiKey: String? = null
+    private lateinit var apiKey: String
 
     @Value("\${openai.model}")
-    private val model: String? = null
+    private lateinit var model: String
 
     @Value("\${openai.uv.prompt.system}")
     private lateinit var systemPrompt: String

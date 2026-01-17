@@ -29,8 +29,8 @@ class AdminService(
             val locationEntity = event.locationEntity
             val msg = """
                 ✅ New user registered!
-                Name: ${userEntity?.name ?: "no name"} (id: ${userEntity?.chatId})
-                Location: ${locationEntity!!.name}
+                Name: ${userEntity.name ?: "no name"} (id: ${userEntity.chatId})
+                Location: ${locationEntity.name ?: "unknown"}
                 """
             uvIndexAbility.getSilent()?.send(msg, adminChatId())
         } catch (e: Exception) {
@@ -45,8 +45,8 @@ class AdminService(
             val locationEntity = event.locationEntity
             val msg = """
                 ❌ User blocked the bot!
-                Name: ${userEntity?.name ?: "no name"} (id: ${userEntity?.chatId})
-                Location: ${locationEntity!!.name}
+                Name: ${userEntity.name ?: "no name"} (id: ${userEntity.chatId})
+                Location: ${locationEntity.name ?: "unknown"}
                 """
             uvIndexAbility.getSilent()?.send(msg, adminChatId())
         } catch (e: Exception) {

@@ -13,19 +13,19 @@ class RecommendationService(
     private val chatGPTService: ChatGPTService,
     private val i18nProperties: I18nProperties
 ) {
-    @Value($$"${openai.enabled:true}")
-    private val openaiEnabled = false
+    @Value("\${openai.enabled}")
+    private var openaiEnabled: Boolean = false
 
     fun createRecommendationText(locationInfo: LocationInfo, userLanguage: UserLanguage): String {
         val weather = locationInfo.weather
 
         var aiRecommendation = ""
         if (openaiEnabled) {
-            val chatResponse = chatGPTService!!.getChatResponse(locationInfo, userLanguage)
+            val chatResponse = chatGPTService.getChatResponse(locationInfo, userLanguage)
             aiRecommendation = chatResponse?.choices?.get(0)?.message?.content ?: ""
         }
 
-        val valueMap: MutableMap<String?, Any?> = HashMap<String?, Any?>()
+        val valueMap: MutableMap<String?, Any?> = HashMap()
         valueMap["uvi"] = weather.uvi
         valueMap["uvi_level"] = getHarmText(weather.uvHarm, userLanguage)
         valueMap["temperature"] = weather.temperature
@@ -33,11 +33,11 @@ class RecommendationService(
         //        valueMap.put("ai_recommendation", aiRecommendation);
 
         val stringSubstitutor = StringSubstitutor(valueMap)
-        val recommendation = i18nProperties!!.get(userLanguage, "recommendation")
+        val recommendation = i18nProperties.get(userLanguage, "recommendation")
         return stringSubstitutor.replace(recommendation)
     }
 
-    private fun getHarmText(harm: Harm, userLanguage: UserLanguage): String? {
+    private fun getHarmText(harm: Harm, userLanguage: UserLanguage): String {
         val key = when (harm) {
             Harm.LOW -> "harm_low"
             Harm.MODERATE -> "harm_moderate"
@@ -45,6 +45,6 @@ class RecommendationService(
             Harm.VERY_HIGH -> "harm_very_high"
             Harm.EXTREME -> "harm_extreme"
         }
-        return i18nProperties!!.get(userLanguage, key)
+        return i18nProperties.get(userLanguage, key)
     }
 }

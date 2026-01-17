@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Weather(
-    var uvi: Float = 0f,
-    var temperature: Float = 0f,
-    var isDay: Boolean = false
+    val uvi: Float = 0f,
+    val temperature: Float = 0f,
+    val isDay: Boolean = false
 ) {
     val uvHarm: Harm
         get() = Harm.fromIndex(uvi)

@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ChatResponse(
-    var choices: List<Choice>
+    val choices: List<Choice>
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class Choice(
-        var index: Int = 0,
-        var message: Message
+        val index: Int = 0,
+        val message: Message
     )
 }

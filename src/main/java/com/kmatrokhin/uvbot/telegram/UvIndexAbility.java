@@ -13,7 +13,6 @@ import com.kmatrokhin.uvbot.services.LocationInfoService;
 import com.kmatrokhin.uvbot.services.RecommendationService;
 import com.kmatrokhin.uvbot.services.UserService;
 import io.sentry.Sentry;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
@@ -46,7 +45,6 @@ import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.getCha
 import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.isUserMessage;
 
 @Service
-@Slf4j
 public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
     private static final String UVI_REQUEST_TEXT = "Get UVI";
     public static final String SETTINGS_TEXT = "Settings and help";
@@ -190,8 +188,8 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             LocationInfo locationInfo;
             if (update.getMessage().hasLocation()) {
                 Location location = update.getMessage().getLocation();
-                Coordinates coordinates = Coordinates.of(location.getLatitude(), location.getLongitude());
-                locationInfo = locationInfoService.getLocationInfo(coordinates);
+                Coordinates coordinates = new Coordinates(location.getLatitude(), location.getLongitude());
+                locationInfo = locationInfoService.getLocationInfo(coordinates, null);
             } else if (isUserMessage(update)) {
                 Optional<UserEntity> userEntityOpt = Optional.ofNullable(userRepository.findByChatId(chatId));
                 if (userEntityOpt.isPresent()) {

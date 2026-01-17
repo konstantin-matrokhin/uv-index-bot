@@ -1,5 +1,7 @@
 package com.kmatrokhin.uvbot.services
 
+import com.kmatrokhin.uvbot.dto.Coordinates
+import com.kmatrokhin.uvbot.dto.LocationInfo
 import com.kmatrokhin.uvbot.dto.UserSignUp
 import com.kmatrokhin.uvbot.entities.LocationEntity
 import com.kmatrokhin.uvbot.entities.UserEntity
@@ -26,38 +28,55 @@ class UserService(
 
         val coordinates = locationInfo.coordinates
 
-        val userEntityOpt = userRepository.findByChatId(chatId)
-        val userEntity: UserEntity
-        if (userEntityOpt != null) {
-            userEntity = userEntityOpt
-            userEntity.name = username
-            userEntity.isSubscribed = true
-            val locationEntity = locationRepository.findByUserEntity(userEntity)
-                ?: throw IllegalStateException("Location not found for chatId ${userEntity.chatId}")
-            locationEntity.name = locationInfo.name
-            locationEntity.latitude = coordinates.latitude
-            locationEntity.longitude = coordinates.longitude
-            locationEntity.lastUvIndex = locationInfo.weather.uvi
-        } else {
-            userEntity = UserEntity(
-                chatId = chatId,
-                name = username,
-                isSubscribed = true,
-                createdAt = Instant.now()
-            )
-            val newLocation = LocationEntity(
-                name = locationInfo.name,
-                latitude = coordinates.latitude,
-                longitude = coordinates.longitude,
-                lastUvIndex = locationInfo.weather.uvi,
-                userEntity = userEntity,
-                createdAt = Instant.now()
-            )
+        val existingUser = userRepository.findByChatId(chatId)
+        if (existingUser == null) {
+            val userEntity = createUser(chatId, username)
+            val newLocation = createLocation(userEntity, locationInfo)
+
             userRepository.save(userEntity)
-            locationRepository.save<LocationEntity?>(newLocation)
+            locationRepository.save(newLocation)
             applicationEventPublisher.publishEvent(UserRegisteredEvent(userEntity, newLocation))
+            return userEntity
+        } else {
+            return updateExistingUser(existingUser, locationInfo, username, coordinates)
         }
-        return userEntity
+    }
+
+    private fun createUser(chatId: Long, username: String?): UserEntity {
+        return UserEntity(
+            chatId = chatId,
+            name = username,
+            isSubscribed = true,
+            createdAt = Instant.now()
+        )
+    }
+
+    private fun createLocation(userEntity: UserEntity, locationInfo: LocationInfo): LocationEntity {
+        return LocationEntity(
+            name = locationInfo.name,
+            latitude = locationInfo.coordinates.latitude,
+            longitude = locationInfo.coordinates.longitude,
+            lastUvIndex = locationInfo.weather.uvi,
+            userEntity = userEntity,
+            createdAt = Instant.now()
+        )
+    }
+
+    private fun updateExistingUser(
+        existingUser: UserEntity,
+        locationInfo: LocationInfo,
+        username: String?,
+        coordinates: Coordinates
+    ): UserEntity {
+        existingUser.name = username
+        existingUser.isSubscribed = true
+        val locationEntity = locationRepository.findByUserEntity(existingUser)
+            ?: throw IllegalStateException("Location not found for chatId ${existingUser.chatId}")
+        locationEntity.name = locationInfo.name
+        locationEntity.latitude = coordinates.latitude
+        locationEntity.longitude = coordinates.longitude
+        locationEntity.lastUvIndex = locationInfo.weather.uvi
+        return existingUser
     }
 
     @Transactional

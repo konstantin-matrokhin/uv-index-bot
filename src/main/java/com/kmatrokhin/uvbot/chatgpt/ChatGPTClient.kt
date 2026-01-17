@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 interface ChatGPTClient {
     @PostMapping("/chat/completions")
     fun getChatCompletion(
-        @RequestHeader("Authorization") authorization: String?,
-        @RequestBody request: ChatRequest?
-    ): ChatResponse?
+        @RequestHeader("Authorization") authorization: String,
+        @RequestBody request: ChatRequest
+    ): ChatResponse
 }
