@@ -30,12 +30,12 @@ class ChatGPTService(
     private lateinit var systemPrompt: String
 
     @Value("\${openai.uv.prompt.user}")
-    private val userPromptTemplate: String? = null
+    private lateinit var userPromptTemplate: String
 
     fun getChatResponse(locationInfo: LocationInfo, userLanguage: UserLanguage): ChatResponse? {
         val weather = locationInfo.weather
         val userPrompt = String.format(
-            userPromptTemplate!!,
+            userPromptTemplate,
             weather.uvi,
             weather.temperature,
             if (weather.isDay) "день" else "ночь",
@@ -45,7 +45,7 @@ class ChatGPTService(
         val chatRequest = ChatRequest(model, systemPrompt.format(language), userPrompt)
         val authorizationHeader = "Bearer $apiKey"
         log.info("Request to ChatGPT: $chatRequest")
-        val chatCompletion = chatGPTClient?.getChatCompletion(authorizationHeader, chatRequest)
+        val chatCompletion = chatGPTClient.getChatCompletion(authorizationHeader, chatRequest)
         log.info("Response from ChatGPT: $chatCompletion")
         return chatCompletion
     }

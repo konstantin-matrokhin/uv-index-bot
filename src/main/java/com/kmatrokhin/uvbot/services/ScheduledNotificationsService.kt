@@ -6,7 +6,6 @@ import com.kmatrokhin.uvbot.repositories.LocationRepository
 import com.kmatrokhin.uvbot.repositories.UserRepository
 import com.kmatrokhin.uvbot.telegram.UvIndexAbility
 import io.sentry.Sentry
-import lombok.SneakyThrows
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.scheduling.annotation.Scheduled
@@ -28,10 +27,9 @@ class ScheduledNotificationsService(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    @SneakyThrows
     @Scheduled(cron = "@hourly")
     fun scheduledNotificationsForUsers() {
-        val allLocations: MutableList<LocationEntity> = locationRepository!!.findAll() as MutableList<LocationEntity>
+        val allLocations: List<LocationEntity> = locationRepository.findAll() as List<LocationEntity>
         log.info(
             "Scheduled updating UV info scheduled for {} locations",
             allLocations.size
@@ -40,36 +38,36 @@ class ScheduledNotificationsService(
             Thread.sleep(5000)
             try {
                 val userEntity = loc.userEntity
-                if (!userEntity!!.isSubscribed!!) {
+                if (!userEntity.isSubscribed) {
                     continue
                 }
                 val chatId = userEntity.chatId
-                val locationInfo = locationInfoService!!.getLocationInfo(loc.coordinates(), loc.name)
+                val locationInfo = locationInfoService.getLocationInfo(loc.coordinates(), loc.name)
                 val lastUvIndex: Float = loc.lastUvIndex!!
                 val newIndex = locationInfo.weather.uvi
                 if (abs(lastUvIndex - newIndex) >= 0.9) {
                     loc.lastUvIndex = newIndex
                     try {
-                        telegramClient!!.execute(
+                        telegramClient.execute(
                             SendMessage.builder()
-                                .replyMarkup(uvIndexAbility!!.mainKeyboard())
+                                .replyMarkup(uvIndexAbility.mainKeyboard())
                                 .text(
-                                    recommendationService!!.createRecommendationText(
+                                    recommendationService.createRecommendationText(
                                         locationInfo,
                                         userEntity.language
                                     )
                                 )
                                 .parseMode("html")
-                                .chatId(chatId!!)
+                                .chatId(chatId)
                                 .build()
                         )
                     } catch (e: TelegramApiException) {
                         Sentry.captureException(e)
                         log.error(e.message)
-                        if (e.message!!.contains("403")) {
-                            applicationEventPublisher!!.publishEvent(UserBlockedBotEvent(userEntity, loc))
+                        if (e.message?.contains("403") ?: false) {
+                            applicationEventPublisher.publishEvent(UserBlockedBotEvent(userEntity, loc))
                             locationRepository.delete(loc)
-                            userRepository!!.delete(userEntity)
+                            userRepository.delete(userEntity)
                         }
                     }
                 }

@@ -16,10 +16,10 @@ class LocationInfoService(
 
     fun getLocationInfo(coordinates: Coordinates, locationName: String?): LocationInfo {
         var locationName = locationName
-        val weather = weatherService!!.getWeather(coordinates)
+        val weather = weatherService.getWeather(coordinates)
         if (locationName == null) {
-            locationName = geocodingService!!.getLocationName(coordinates)
+            locationName = geocodingService.getLocationName(coordinates)
         }
-        return LocationInfo(locationName!!, coordinates, weather)
+        return LocationInfo(locationName, coordinates, weather)
     }
 }

@@ -9,10 +9,10 @@ import java.util.*
 class UserEntity (
     @Id
     var id: UUID = UUID.randomUUID(),
-    var chatId: Long? = null,
+    var chatId: Long,
     var name: String? = null,
-    var isSubscribed: Boolean? = null,
-    var createdAt: Instant? = Instant.now(),
+    var isSubscribed: Boolean,
+    var createdAt: Instant = Instant.now(),
 
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "lang")

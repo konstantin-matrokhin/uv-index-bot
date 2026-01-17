@@ -24,7 +24,7 @@ class TelegramBeanConfig {
     }
 
     @Bean
-    fun httpClient(): HttpClient? {
+    fun httpClient(): HttpClient {
         return HttpClient.newHttpClient()
     }
 }

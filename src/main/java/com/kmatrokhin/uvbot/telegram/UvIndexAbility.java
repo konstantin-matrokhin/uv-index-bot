@@ -122,7 +122,7 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
     }
 
     private UserLanguage getLanguage(Long chatId) {
-        return userRepository.findByChatId(chatId).map(UserEntity::getLanguage).orElse(UserLanguage.ENGLISH);
+        return Optional.ofNullable(userRepository.findByChatId(chatId)).map(UserEntity::getLanguage).orElse(UserLanguage.ENGLISH);
     }
 
     private KeyboardButton manageSubscription() {
@@ -193,9 +193,9 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
                 Coordinates coordinates = Coordinates.of(location.getLatitude(), location.getLongitude());
                 locationInfo = locationInfoService.getLocationInfo(coordinates);
             } else if (isUserMessage(update)) {
-                Optional<UserEntity> userEntityOpt = userRepository.findByChatId(chatId);
+                Optional<UserEntity> userEntityOpt = Optional.ofNullable(userRepository.findByChatId(chatId));
                 if (userEntityOpt.isPresent()) {
-                    LocationEntity locationEntity = locationRepository.getByUserEntity(userEntityOpt.get());
+                    LocationEntity locationEntity = locationRepository.findByUserEntity(userEntityOpt.get());
                     Coordinates coordinates = locationEntity.coordinates();
                     locationInfo = locationInfoService.getLocationInfo(coordinates, locationEntity.getName());
                 } else {
@@ -207,12 +207,9 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
             }
 
             String userName = update.getMessage().getFrom().getUserName();
-            UserSignUp userSignUp = new UserSignUp();
-            userSignUp.setName(userName != null ? "@" + userName : update.getMessage()
-                    .getFrom()
-                    .getFirstName() + " " + update.getMessage().getFrom().getLastName());
-            userSignUp.setChatId(chatId);
-            userSignUp.setLocationInfo(locationInfo);
+            UserSignUp userSignUp = new UserSignUp(chatId, userName != null ? "@" + userName : update.getMessage()
+                .getFrom()
+                .getFirstName() + " " + update.getMessage().getFrom().getLastName(), locationInfo);
             UserEntity userEntity = userService.signUpOrUpdate(userSignUp);
 
             silent.execute(
@@ -229,7 +226,6 @@ public class UvIndexAbility extends AbilityBot implements SpringLongPollingBot {
                 .build()
             );
         } catch (Exception e) {
-            e.printStackTrace();
             Sentry.captureException(e);
         }
     }

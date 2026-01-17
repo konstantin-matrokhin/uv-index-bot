@@ -19,6 +19,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.kmatrokhin.uvbot.telegram.UvIndexAbility.SETTINGS_TEXT;
 import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.getChatId;
@@ -90,7 +91,7 @@ public class SettingsAbility implements AbilityExtension {
     }
 
     private UserLanguage getLanguage(Long chatId) {
-        return userRepository.findByChatId(chatId).map(UserEntity::getLanguage).orElse(UserLanguage.ENGLISH);
+        return Optional.ofNullable(userRepository.findByChatId(chatId)).map(UserEntity::getLanguage).orElse(UserLanguage.ENGLISH);
     }
 
     private InlineKeyboardMarkup helpInlineKeyboard(Update update, UserLanguage language) {

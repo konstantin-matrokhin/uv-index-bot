@@ -8,14 +8,14 @@ import java.util.*
 
 @Entity
 @Table(name = "location")
-class LocationEntity(
+data class LocationEntity(
     @Id
     var id: UUID = UUID.randomUUID(),
-    var latitude: Double? = null,
-    var longitude: Double? = null,
+    var latitude: Double,
+    var longitude: Double,
     @ManyToOne
     @JoinColumn(name = "user_id")
-    var userEntity: UserEntity? = null,
+    var userEntity: UserEntity,
     var name: String? = null,
     var lastUvIndex: Float? = null,
     var createdAt: Instant? = Instant.now()

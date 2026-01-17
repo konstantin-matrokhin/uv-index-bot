@@ -7,13 +7,9 @@ import org.springframework.stereotype.Repository
 import java.util.*
 
 @Repository
-interface UserRepository : JpaRepository<UserEntity?, UUID?> {
-    fun findByChatId(chatId: Long?): Optional<UserEntity>
-
-    fun getByChatId(chatId: Long?): UserEntity {
-        return findByChatId(chatId).orElseThrow()
-    }
+interface UserRepository : JpaRepository<UserEntity, UUID?> {
+    fun findByChatId(chatId: Long): UserEntity?
 
     @Query("from UserEntity u where u.isSubscribed = true")
-    fun findSubscribedUsers(): MutableList<UserEntity?>?
+    fun findSubscribedUsers(): List<UserEntity>
 }

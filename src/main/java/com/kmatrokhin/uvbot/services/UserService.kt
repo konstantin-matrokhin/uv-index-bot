@@ -24,50 +24,54 @@ class UserService(
         val username = userSignUp.name
         val locationInfo = userSignUp.locationInfo
 
-        val userEntityOpt = userRepository!!.findByChatId(chatId)
-        val coordinates = locationInfo!!.coordinates
+        val coordinates = locationInfo.coordinates
+
+        val userEntityOpt = userRepository.findByChatId(chatId)
         val userEntity: UserEntity
-        if (userEntityOpt!!.isPresent()) {
-            userEntity = userEntityOpt.get()
+        if (userEntityOpt != null) {
+            userEntity = userEntityOpt
             userEntity.name = username
             userEntity.isSubscribed = true
-            val locationEntity = locationRepository!!.getByUserEntity(userEntity)
+            val locationEntity = locationRepository.findByUserEntity(userEntity)
+                ?: throw IllegalStateException("Location not found for chatId ${userEntity.chatId}")
             locationEntity.name = locationInfo.name
             locationEntity.latitude = coordinates.latitude
             locationEntity.longitude = coordinates.longitude
             locationEntity.lastUvIndex = locationInfo.weather.uvi
         } else {
-            userEntity = UserEntity()
-            userEntity.chatId = chatId
-            userEntity.name = username
-            userEntity.isSubscribed = true
-            userEntity.createdAt = Instant.now()
-            val newLocation = LocationEntity()
-            newLocation.name = locationInfo.name
-            newLocation.latitude = coordinates.latitude
-            newLocation.longitude = coordinates.longitude
-            newLocation.lastUvIndex = locationInfo.weather.uvi
-            newLocation.userEntity = userEntity
-            newLocation.createdAt = Instant.now()
-            userRepository.save<UserEntity?>(userEntity)
-            locationRepository!!.save<LocationEntity?>(newLocation)
-            applicationEventPublisher!!.publishEvent(UserRegisteredEvent(userEntity, newLocation))
+            userEntity = UserEntity(
+                chatId = chatId,
+                name = username,
+                isSubscribed = true,
+                createdAt = Instant.now()
+            )
+            val newLocation = LocationEntity(
+                name = locationInfo.name,
+                latitude = coordinates.latitude,
+                longitude = coordinates.longitude,
+                lastUvIndex = locationInfo.weather.uvi,
+                userEntity = userEntity,
+                createdAt = Instant.now()
+            )
+            userRepository.save(userEntity)
+            locationRepository.save<LocationEntity?>(newLocation)
+            applicationEventPublisher.publishEvent(UserRegisteredEvent(userEntity, newLocation))
         }
         return userEntity
     }
 
     @Transactional
-    fun setSubscription(chatId: Long?, isSubscribed: Boolean) {
-        userRepository!!.getByChatId(chatId).isSubscribed = isSubscribed
+    fun setSubscription(chatId: Long, isSubscribed: Boolean) {
+        userRepository.findByChatId(chatId)?.isSubscribed = isSubscribed
     }
 
     @Transactional
-    fun isSubscribed(chatId: Long?): Boolean {
-        return userRepository!!.findByChatId(chatId)!!.map<Boolean>(UserEntity::isSubscribed).orElse(false)
+    fun isSubscribed(chatId: Long): Boolean {
+        return userRepository.findByChatId(chatId)?.isSubscribed ?: false
     }
 
     @Transactional
-    fun setLanguage(chatId: Long?, language: UserLanguage) {
-        userRepository!!.getByChatId(chatId).language = language
+    fun setLanguage(chatId: Long, language: UserLanguage) {
+        userRepository.findByChatId(chatId)?.language = language
     }
 }

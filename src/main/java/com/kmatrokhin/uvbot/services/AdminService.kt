@@ -48,7 +48,7 @@ class AdminService(
                 Name: ${userEntity?.name ?: "no name"} (id: ${userEntity?.chatId})
                 Location: ${locationEntity!!.name}
                 """
-            uvIndexAbility!!.getSilent()?.send(msg, adminChatId())
+            uvIndexAbility.getSilent()?.send(msg, adminChatId())
         } catch (e: Exception) {
             Sentry.captureException(e)
         }
@@ -60,20 +60,20 @@ class AdminService(
         try {
             val subscribedUsers = userRepository.findSubscribedUsers()
             val usernamesList =
-                subscribedUsers!!.mapNotNull { it!!.name }.joinToString(", ")
+                subscribedUsers.mapNotNull { it.name }.joinToString(", ")
             val msg = """
                 📅 Daily stats:
                 - ${subscribedUsers.size} users subscribed
                 - List of users: $usernamesList
                 
                 """
-            uvIndexAbility!!.getSilent()?.send(msg, adminChatId())
+            uvIndexAbility.getSilent()?.send(msg, adminChatId())
         } catch (e: Exception) {
             Sentry.captureException(e)
         }
     }
 
     private fun adminChatId(): Long {
-        return uvIndexAbility!!.creatorId()
+        return uvIndexAbility.creatorId()
     }
 }

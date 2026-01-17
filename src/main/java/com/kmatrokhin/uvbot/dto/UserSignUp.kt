@@ -1,7 +1,7 @@
 package com.kmatrokhin.uvbot.dto
 
 data class UserSignUp (
-    var chatId: Long? = null,
+    var chatId: Long,
     var name: String? = null,
-    var locationInfo: LocationInfo? = null
+    var locationInfo: LocationInfo
 )
