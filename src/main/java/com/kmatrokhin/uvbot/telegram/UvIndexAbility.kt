@@ -32,6 +32,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
 import org.telegram.telegrambots.meta.generics.TelegramClient
 
+const val UVI_REQUEST_TEXT = "Get UVI"
+const val SETTINGS_TEXT: String = "Settings and help"
+
 @Service
 class UvIndexAbility(
     telegramClient: TelegramClient,
@@ -141,72 +144,88 @@ class UvIndexAbility(
     fun sendUvIndexWhenLocationIsSent(): ReplyFlow {
         return ReplyFlow.builder(db)
             .onlyIf(Flag.LOCATION)
-            .action { _: BaseAbilityBot, update: Update -> sendUviMessage(update) }
+            .action { _: BaseAbilityBot, update: Update ->
+                runCatching { sendUviMessage(update) }.onFailure {
+                    Sentry.captureException(
+                        it
+                    )
+                }
+            }
             .build()
     }
 
     fun sendUvIndexWhenItsRequested(): ReplyFlow {
         return ReplyFlow.builder(db)
             .onlyIf { update: Update ->
-                Flag.TEXT.test(update) && (update.message.text.contains(
-                    UVI_REQUEST_TEXT
-                ))
+                Flag.TEXT.test(update) && (update.message?.text?.contains(UVI_REQUEST_TEXT) == true)
             }
-            .action { _: BaseAbilityBot, update: Update -> sendUviMessage(update) }
+            .action { _: BaseAbilityBot, update: Update ->
+                runCatching { sendUviMessage(update) }.onFailure {
+                    Sentry.captureException(
+                        it
+                    )
+                }
+            }
             .build()
     }
 
     private fun sendUviMessage(update: Update) {
-        try {
-            if (!update.hasMessage()) {
-                return
-            }
-            val chatId = AbilityUtils.getChatId(update)
-            val locationInfo: LocationInfo
+        val message = update.message ?: return
+        val chatId = AbilityUtils.getChatId(update)
 
-            if (update.message.hasLocation()) {
-                val location = update.message.location
+        val locationInfo: LocationInfo = when {
+            message.hasLocation() -> {
+                val location = message.location
                 val coordinates = Coordinates(location.latitude, location.longitude)
-                locationInfo = locationInfoService.getLocationInfo(coordinates, null)
-            } else if (AbilityUtils.isUserMessage(update)) {
-                val userEntityOpt = userRepository.findByChatId(chatId)
-                if (userEntityOpt != null) {
-                    val locationEntity = locationRepository.findByUserEntity(userEntityOpt)
-                    val coordinates = locationEntity!!.coordinates()
-                    locationInfo = locationInfoService.getLocationInfo(coordinates, locationEntity.name)
-                } else {
-                    sendInitMessage(update, UserLanguage.ENGLISH)
-                    return
-                }
-            } else {
-                return
+
+                val language = getLanguage(chatId)
+                locationInfoService.getLocationInfo(coordinates, language)
             }
 
-            val userName = update.message.from.userName
-            val userSignUp = UserSignUp(
-                chatId, if (userName != null) "@$userName" else update.message
-                    .from
-                    .firstName + " " + update.message.from.lastName, locationInfo
-            )
-            val userEntity = userService.signUpOrUpdate(userSignUp)
+            AbilityUtils.isUserMessage(update) -> {
+                val userEntity = userRepository.findByChatId(chatId)
+                    ?: run {
+                        sendInitMessage(update, UserLanguage.ENGLISH)
+                        return
+                    }
 
-            silent.execute(
-                SendChatAction.builder()
-                    .chatId(chatId)
-                    .action(ActionType.TYPING.toString())
-                    .build()
-            )
-            silent.execute(
-                SendMessage.builder()
-                    .replyMarkup(mainKeyboard())
-                    .text(recommendationService.createRecommendationText(locationInfo, userEntity.language))
-                    .parseMode("html")
-                    .chatId(chatId)
-                    .build()
-            )
-        } catch (e: Exception) {
-            Sentry.captureException(e)
+                val locationEntity = locationRepository.findByUserEntity(userEntity)
+                    ?: run {
+                        sendInitMessage(update, userEntity.language)
+                        return
+                    }
+
+                locationInfoService.getLocationInfo(
+                    coordinates = locationEntity.coordinates(),
+                    language = userEntity.language,
+                    locationName = locationEntity.name
+                )
+            }
+
+            else -> return
         }
+
+        val user = message.from
+        val userName: String? = user.userName?.let { "@$it" }
+            ?: listOfNotNull(user.firstName, user.lastName).joinToString(" ").ifBlank { null }
+
+        val userSignUp = UserSignUp(chatId = chatId, name = userName, locationInfo = locationInfo)
+        val userEntity = userService.signUpOrUpdate(userSignUp)
+
+        silent.execute(
+            SendChatAction.builder()
+                .chatId(chatId)
+                .action(ActionType.TYPING.toString())
+                .build()
+        )
+        silent.execute(
+            SendMessage.builder()
+                .replyMarkup(mainKeyboard())
+                .text(recommendationService.createRecommendationText(locationInfo, userEntity.language))
+                .parseMode("html")
+                .chatId(chatId)
+                .build()
+        )
     }
 
     override fun creatorId(): Long {
@@ -223,10 +242,5 @@ class UvIndexAbility(
 
     public override fun addExtension(abilityExtension: AbilityExtension) {
         super.addExtension(abilityExtension)
-    }
-
-    companion object {
-        private const val UVI_REQUEST_TEXT = "Get UVI"
-        const val SETTINGS_TEXT: String = "Settings and help"
     }
 }

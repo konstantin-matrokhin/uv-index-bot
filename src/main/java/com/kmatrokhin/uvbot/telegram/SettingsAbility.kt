@@ -1,7 +1,6 @@
 package com.kmatrokhin.uvbot.telegram
 
 import com.kmatrokhin.uvbot.dto.I18nProperties
-import com.kmatrokhin.uvbot.entities.UserEntity
 import com.kmatrokhin.uvbot.entities.UserLanguage
 import com.kmatrokhin.uvbot.repositories.UserRepository
 import com.kmatrokhin.uvbot.services.UserService
@@ -19,7 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
-import java.util.*
 
 @Service
 @RequiredArgsConstructor
@@ -42,10 +40,12 @@ class SettingsAbility(
                     .equals("unsubscribe", ignoreCase = true)
             }
             .action { _: BaseAbilityBot, update: Update ->
-                unsubscribe(
-                    update,
-                    getLanguage(AbilityUtils.getChatId(update))
-                )
+                runCatching {
+                    unsubscribe(
+                        update,
+                        getLanguage(AbilityUtils.getChatId(update))
+                    )
+                }.onFailure { Sentry.captureException(it) }
             }.build()
     }
 
@@ -56,44 +56,38 @@ class SettingsAbility(
                     .equals("subscribe", ignoreCase = true)
             }
             .action { _: BaseAbilityBot, update: Update ->
-                subscribe(
-                    update,
-                    getLanguage(AbilityUtils.getChatId(update))
-                )
+                runCatching {
+                    subscribe(
+                        update,
+                        getLanguage(AbilityUtils.getChatId(update))
+                    )
+                }.onFailure { Sentry.captureException(it) }
             }.build()
     }
 
     fun unsubscribe(update: Update, language: UserLanguage) {
-        try {
-            val chatId = AbilityUtils.getChatId(update)
-            userService.setSubscription(chatId, false)
-            uvIndexAbility.getSilent().send(i18nProperties.get(language, "unsubscribe_reply"), chatId)
-        } catch (e: Exception) {
-            Sentry.captureException(e)
-        }
+        val chatId = AbilityUtils.getChatId(update)
+        userService.setSubscription(chatId, false)
+        uvIndexAbility.silent.send(i18nProperties.get(language, "unsubscribe_reply"), chatId)
     }
 
     fun subscribe(update: Update, language: UserLanguage) {
-        try {
-            val chatId = AbilityUtils.getChatId(update)
-            userService.setSubscription(chatId, true)
-            uvIndexAbility.getSilent().send(i18nProperties.get(language, "subscribe_reply"), chatId)
-        } catch (e: Exception) {
-            Sentry.captureException(e)
-        }
+        val chatId = AbilityUtils.getChatId(update)
+        userService.setSubscription(chatId, true)
+        uvIndexAbility.silent.send(i18nProperties.get(language, "subscribe_reply"), chatId)
     }
 
     fun sendSettingsAndHelp(): ReplyFlow {
         return ReplyFlow.builder(uvIndexAbility.db)
             .onlyIf { update: Update ->
                 Flag.TEXT.test(update) && (update.message.text
-                    .contains(UvIndexAbility.SETTINGS_TEXT))
+                    .contains(SETTINGS_TEXT))
             }
-            .action { bot: BaseAbilityBot, update: Update ->
+            .action { _: BaseAbilityBot, update: Update ->
                 try {
                     val chatId = AbilityUtils.getChatId(update)
                     val language = getLanguage(chatId)
-                    uvIndexAbility.getSilent().execute(
+                    uvIndexAbility.silent.execute(
                         SendMessage.builder()
                             .chatId(chatId)
                             .text(i18nProperties.get(language, "settings_menu_title"))
@@ -108,17 +102,18 @@ class SettingsAbility(
     }
 
     private fun getLanguage(chatId: Long): UserLanguage {
-        return Optional.ofNullable<UserEntity>(userRepository.findByChatId(chatId))
-            .map(UserEntity::language).orElse(UserLanguage.ENGLISH)
+        return userRepository.findByChatId(chatId)?.language ?: UserLanguage.ENGLISH
     }
 
     private fun helpInlineKeyboard(update: Update, language: UserLanguage): InlineKeyboardMarkup {
         return InlineKeyboardMarkup.builder().keyboard(
             listOf(
                 InlineKeyboardRow(
-                    if (userService.isSubscribed(AbilityUtils.getChatId(update))) unsubscribeButton(language) else subscribeButton(
-                        language
-                    )
+                    if (userService.isSubscribed(AbilityUtils.getChatId(update))) {
+                        unsubscribeButton(language)
+                    } else {
+                        subscribeButton(language)
+                    }
                 ),
                 InlineKeyboardRow(cannotSendLocationButton(language)),
                 InlineKeyboardRow(lang())
@@ -154,10 +149,12 @@ class SettingsAbility(
                     .equals("cannot_send_location", ignoreCase = true)
             }
             .action { _: BaseAbilityBot, update: Update ->
-                uvIndexAbility.getSilent().send(
-                    i18nProperties.get(getLanguage(AbilityUtils.getChatId(update)), "cannot_send_location"),
-                    AbilityUtils.getChatId(update)
-                )
+                runCatching {
+                    uvIndexAbility.silent.send(
+                        i18nProperties.get(getLanguage(AbilityUtils.getChatId(update)), "cannot_send_location"),
+                        AbilityUtils.getChatId(update)
+                    )
+                }.onFailure { Sentry.captureException(it) }
             }.build()
     }
 
@@ -167,13 +164,15 @@ class SettingsAbility(
                 Flag.CALLBACK_QUERY.test(update)
                         && update.callbackQuery.data.equals("lang_menu", ignoreCase = true)
             }.action { _: BaseAbilityBot, update: Update ->
-                uvIndexAbility.getSilent().execute(
-                    SendMessage.builder()
-                        .replyMarkup(langMenu())
-                        .text("Choose a language\nВыберите язык")
-                        .chatId(AbilityUtils.getChatId(update))
-                        .build()
-                )
+                runCatching {
+                    uvIndexAbility.silent.execute(
+                        SendMessage.builder()
+                            .replyMarkup(langMenu())
+                            .text("Choose a language\nВыберите язык")
+                            .chatId(AbilityUtils.getChatId(update))
+                            .build()
+                    )
+                }.onFailure { Sentry.captureException(it) }
             }
             .build()
     }
@@ -185,13 +184,15 @@ class SettingsAbility(
                     .equals("lang_en", ignoreCase = true)
             }
             .action { bot: BaseAbilityBot, update: Update ->
-                userService.setLanguage(AbilityUtils.getChatId(update), UserLanguage.ENGLISH)
-                uvIndexAbility.getSilent().execute(
-                    SendMessage.builder()
-                        .text("Done!")
-                        .chatId(AbilityUtils.getChatId(update))
-                        .build()
-                )
+                runCatching {
+                    userService.setLanguage(AbilityUtils.getChatId(update), UserLanguage.ENGLISH)
+                    uvIndexAbility.silent.execute(
+                        SendMessage.builder()
+                            .text("Done!")
+                            .chatId(AbilityUtils.getChatId(update))
+                            .build()
+                    )
+                }.onFailure { Sentry.captureException(it) }
             }
             .build()
     }
@@ -203,13 +204,15 @@ class SettingsAbility(
                     .equals("lang_ru", ignoreCase = true)
             }
             .action { _: BaseAbilityBot, update: Update ->
-                userService.setLanguage(AbilityUtils.getChatId(update), UserLanguage.RUSSIAN)
-                uvIndexAbility.getSilent().execute(
-                    SendMessage.builder()
-                        .text("Готово!")
-                        .chatId(AbilityUtils.getChatId(update))
-                        .build()
-                )
+                runCatching {
+                    userService.setLanguage(AbilityUtils.getChatId(update), UserLanguage.RUSSIAN)
+                    uvIndexAbility.silent.execute(
+                        SendMessage.builder()
+                            .text("Готово!")
+                            .chatId(AbilityUtils.getChatId(update))
+                            .build()
+                    )
+                }.onFailure { Sentry.captureException(it) }
             }
             .build()
     }

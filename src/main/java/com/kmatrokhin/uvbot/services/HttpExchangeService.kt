@@ -9,6 +9,8 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.util.concurrent.CompletionException
+import java.util.concurrent.TimeUnit
 
 @Service
 class HttpExchangeService(
@@ -24,11 +26,21 @@ class HttpExchangeService(
             .header("User-Agent", "uv-index-tg-bot/1.1 (konstantin.matrokhin@gmail.com)")
             .GET()
             .build()
+
         log.info("GET {}", request.uri())
-        val send = httpClient.send(request, HttpResponse.BodyHandlers.ofString())
-        val body = send.body()
+
+        val body = try {
+            httpClient
+                .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .orTimeout(5, TimeUnit.SECONDS)
+                .join()
+                .body()
+        } catch (e: CompletionException) {
+            throw e.cause ?: e
+        }
+
         val jsonNode = objectMapper.readTree(body)
-        log.info("Got response from {}: {}", request.uri(), jsonNode.toString())
+        log.info("Got response from {}", request.uri())
         return jsonNode
     }
 }

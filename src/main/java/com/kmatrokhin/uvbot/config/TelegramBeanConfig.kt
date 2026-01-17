@@ -25,6 +25,8 @@ class TelegramBeanConfig {
 
     @Bean
     fun httpClient(): HttpClient {
-        return HttpClient.newHttpClient()
+        return HttpClient.newBuilder()
+            .connectTimeout(java.time.Duration.ofSeconds(3))
+            .build()
     }
 }

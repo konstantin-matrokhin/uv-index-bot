@@ -40,7 +40,7 @@ class ScheduledNotificationsService(
                 if (!userEntity.isSubscribed) {
                     continue
                 }
-                val locationInfo = locationInfoService.getLocationInfo(loc.coordinates(), loc.name)
+                val locationInfo = locationInfoService.getLocationInfo(loc.coordinates(), userEntity.language, loc.name)
                 val lastUvIndex: Float = loc.lastUvIndex ?: 0f
                 val newIndex = locationInfo.weather.uvi
                 if (abs(lastUvIndex - newIndex) >= 0.9) {

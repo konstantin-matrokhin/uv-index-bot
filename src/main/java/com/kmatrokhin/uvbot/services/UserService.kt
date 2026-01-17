@@ -28,18 +28,15 @@ class UserService(
 
         val coordinates = locationInfo.coordinates
 
-        val existingUser = userRepository.findByChatId(chatId)
-        if (existingUser == null) {
+        val existingUser = userRepository.findByChatId(chatId) ?: run {
             val userEntity = createUser(chatId, username)
             val newLocation = createLocation(userEntity, locationInfo)
-
             userRepository.save(userEntity)
             locationRepository.save(newLocation)
             applicationEventPublisher.publishEvent(UserRegisteredEvent(userEntity, newLocation))
             return userEntity
-        } else {
-            return updateExistingUser(existingUser, locationInfo, username, coordinates)
         }
+        return updateExistingUser(existingUser, locationInfo, username, coordinates)
     }
 
     private fun createUser(chatId: Long, username: String?): UserEntity {
@@ -70,12 +67,14 @@ class UserService(
     ): UserEntity {
         existingUser.name = username
         existingUser.isSubscribed = true
-        val locationEntity = locationRepository.findByUserEntity(existingUser)
-            ?: throw IllegalStateException("Location not found for chatId ${existingUser.chatId}")
-        locationEntity.name = locationInfo.name
-        locationEntity.latitude = coordinates.latitude
-        locationEntity.longitude = coordinates.longitude
-        locationEntity.lastUvIndex = locationInfo.weather.uvi
+        val locationEntity = locationRepository.findByUserEntity(existingUser)?.let {
+            it.apply {
+                name = locationInfo.name
+                latitude = coordinates.latitude
+                longitude = coordinates.longitude
+                lastUvIndex = locationInfo.weather.uvi
+            }
+        }
         return existingUser
     }
 

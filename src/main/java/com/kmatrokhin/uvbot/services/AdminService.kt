@@ -17,6 +17,7 @@ class AdminService(
     private var uvIndexAbility: UvIndexAbility,
     private var userRepository: UserRepository
 ) : AbilityExtension {
+
     @PostConstruct
     fun init() {
         uvIndexAbility.addExtension(this)
@@ -24,7 +25,7 @@ class AdminService(
 
     @EventListener
     fun onNewUserRegistered(event: UserRegisteredEvent) {
-        try {
+        runCatching {
             val userEntity = event.userEntity
             val locationEntity = event.locationEntity
             val msg = """
@@ -32,15 +33,13 @@ class AdminService(
                 Name: ${userEntity.name ?: "no name"} (id: ${userEntity.chatId})
                 Location: ${locationEntity.name ?: "unknown"}
                 """
-            uvIndexAbility.getSilent().send(msg, adminChatId())
-        } catch (e: Exception) {
-            Sentry.captureException(e)
-        }
+            uvIndexAbility.silent.send(msg, adminChatId())
+        }.onFailure { Sentry.captureException(it) }
     }
 
     @EventListener
     fun onUserBlocked(event: UserBlockedBotEvent) {
-        try {
+        runCatching {
             val userEntity = event.userEntity
             val locationEntity = event.locationEntity
             val msg = """
@@ -48,16 +47,14 @@ class AdminService(
                 Name: ${userEntity.name ?: "no name"} (id: ${userEntity.chatId})
                 Location: ${locationEntity.name ?: "unknown"}
                 """
-            uvIndexAbility.getSilent().send(msg, adminChatId())
-        } catch (e: Exception) {
-            Sentry.captureException(e)
-        }
+            uvIndexAbility.silent.send(msg, adminChatId())
+        }.onFailure { Sentry.captureException(it) }
     }
 
     @Scheduled(cron = "0 0 7 * * *")
     @EventListener(StatsRequestedEvent::class)
     fun stats() {
-        try {
+        runCatching {
             val subscribedUsers = userRepository.findSubscribedUsers()
             val usernamesList =
                 subscribedUsers.mapNotNull { it.name }.joinToString(", ")
@@ -65,12 +62,9 @@ class AdminService(
                 📅 Daily stats:
                 - ${subscribedUsers.size} users subscribed
                 - List of users: $usernamesList
-                
                 """
-            uvIndexAbility.getSilent().send(msg, adminChatId())
-        } catch (e: Exception) {
-            Sentry.captureException(e)
-        }
+            uvIndexAbility.silent.send(msg, adminChatId())
+        }.onFailure { Sentry.captureException(it) }
     }
 
     private fun adminChatId(): Long {

@@ -9,4 +9,8 @@ import java.util.*
 @Repository
 interface LocationRepository : JpaRepository<LocationEntity, UUID> {
     fun findByUserEntity(userEntity: UserEntity): LocationEntity?
+
+    fun getByUserEntity(userEntity: UserEntity): LocationEntity {
+        return findByUserEntity(userEntity) ?: throw IllegalArgumentException("User not found")
+    }
 }

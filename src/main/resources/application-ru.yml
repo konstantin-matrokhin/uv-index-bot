@@ -3,6 +3,7 @@ i18n.dictionary.RUSSIAN:
     ☀️<b>УФ индекс</b>: ${uvi} (${uvi_level})
     🌡️️<b>Температура</b>: ${temperature}°C
     📍<b>Место</b>: ${place}
+  unknown_place: Неизвестное место
   harm_low: Низкий
   harm_moderate: Умеренный
   harm_high: Высокий
