@@ -4,7 +4,6 @@ import com.kmatrokhin.uvbot.dto.Coordinates
 import com.kmatrokhin.uvbot.dto.I18nProperties
 import com.kmatrokhin.uvbot.dto.LocationInfo
 import com.kmatrokhin.uvbot.dto.UserSignUp
-import com.kmatrokhin.uvbot.entities.UserEntity
 import com.kmatrokhin.uvbot.entities.UserLanguage
 import com.kmatrokhin.uvbot.repositories.LocationRepository
 import com.kmatrokhin.uvbot.repositories.UserRepository
@@ -18,10 +17,8 @@ import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.abilitybots.api.bot.AbilityBot
 import org.telegram.telegrambots.abilitybots.api.bot.BaseAbilityBot
-import org.telegram.telegrambots.abilitybots.api.db.DBContext
 import org.telegram.telegrambots.abilitybots.api.db.MapDBContext
 import org.telegram.telegrambots.abilitybots.api.objects.*
-import org.telegram.telegrambots.abilitybots.api.sender.SilentSender
 import org.telegram.telegrambots.abilitybots.api.util.AbilityExtension
 import org.telegram.telegrambots.abilitybots.api.util.AbilityUtils
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer
@@ -34,7 +31,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
 import org.telegram.telegrambots.meta.generics.TelegramClient
-import java.util.*
 
 @Service
 class UvIndexAbility(
@@ -45,14 +41,19 @@ class UvIndexAbility(
     private val recommendationService: RecommendationService,
     private val locationRepository: LocationRepository,
     private val i18nProperties: I18nProperties
-) : AbilityBot(telegramClient, "uv_advisor_bot", MapDBContext.onlineInstance("uv_bot.db")), SpringLongPollingBot {
+) : AbilityBot(
+    telegramClient, "uv_advisor_bot",
+    MapDBContext.onlineInstance("uv_bot.db")
+),
+    SpringLongPollingBot {
+
     @Value("\${telegram.token}")
     private lateinit var telegramToken: String
 
     @EventListener
     fun onStart(event: ContextRefreshedEvent) {
         runCatching { onRegister() }
-            .onFailure { e -> Sentry.captureException(e) }
+            .onFailure { Sentry.captureException(it) }
     }
 
     fun start(): Ability {
@@ -60,14 +61,12 @@ class UvIndexAbility(
             .name("start")
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
-            .action { context: MessageContext ->
-                sendInitMessage(context!!.update(), UserLanguage.ENGLISH)
-            }
+            .action { context -> sendInitMessage(context.update(), UserLanguage.ENGLISH) }
             .build()
     }
 
     fun sendInitMessage(update: Update, language: UserLanguage) {
-        try {
+        runCatching {
             silent.execute(
                 SendMessage.builder()
                     .replyMarkup(startKeyboard())
@@ -75,9 +74,7 @@ class UvIndexAbility(
                     .chatId(AbilityUtils.getChatId(update))
                     .build()
             )
-        } catch (e: Exception) {
-            Sentry.captureException(e)
-        }
+        }.onFailure { Sentry.captureException(it) }
     }
 
     fun mainKeyboard(): ReplyKeyboardMarkup {
@@ -95,8 +92,7 @@ class UvIndexAbility(
     }
 
     private fun getLanguage(chatId: Long): UserLanguage {
-        return Optional.ofNullable<UserEntity>(userRepository.findByChatId(chatId))
-            .map(UserEntity::language).orElse(UserLanguage.ENGLISH)
+        return userRepository.findByChatId(chatId)?.language ?: UserLanguage.ENGLISH
     }
 
     private fun manageSubscription(): KeyboardButton {
@@ -118,7 +114,7 @@ class UvIndexAbility(
     }
 
     fun showMainMenu(update: Update, language: UserLanguage) {
-        try {
+        runCatching {
             silent.execute(
                 SendMessage.builder()
                     .replyMarkup(mainKeyboard())
@@ -126,9 +122,7 @@ class UvIndexAbility(
                     .chatId(AbilityUtils.getChatId(update))
                     .build()
             )
-        } catch (e: Exception) {
-            Sentry.captureException(e)
-        }
+        }.onFailure { Sentry.captureException(it) }
     }
 
     fun locationButton(): KeyboardButton {
@@ -147,7 +141,8 @@ class UvIndexAbility(
     fun sendUvIndexWhenLocationIsSent(): ReplyFlow {
         return ReplyFlow.builder(db)
             .onlyIf(Flag.LOCATION)
-            .action { _: BaseAbilityBot, update: Update -> sendUviMessage(update) }.build()
+            .action { _: BaseAbilityBot, update: Update -> sendUviMessage(update) }
+            .build()
     }
 
     fun sendUvIndexWhenItsRequested(): ReplyFlow {
@@ -163,11 +158,12 @@ class UvIndexAbility(
 
     private fun sendUviMessage(update: Update) {
         try {
-            if (update.message == null) {
+            if (!update.hasMessage()) {
                 return
             }
             val chatId = AbilityUtils.getChatId(update)
             val locationInfo: LocationInfo
+
             if (update.message.hasLocation()) {
                 val location = update.message.location
                 val coordinates = Coordinates(location.latitude, location.longitude)
@@ -224,13 +220,6 @@ class UvIndexAbility(
     override fun getUpdatesConsumer(): LongPollingUpdateConsumer {
         return this
     }
-
-    override fun getSilent(): SilentSender {
-        return super.getSilent()
-    }
-
-    val dB: DBContext
-        get() = super.db
 
     public override fun addExtension(abilityExtension: AbilityExtension) {
         super.addExtension(abilityExtension)

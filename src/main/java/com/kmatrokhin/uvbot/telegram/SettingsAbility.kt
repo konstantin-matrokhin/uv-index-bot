@@ -36,7 +36,7 @@ class SettingsAbility(
     }
 
     fun unsubscribeFlow(): ReplyFlow {
-        return ReplyFlow.builder(uvIndexAbility.dB)
+        return ReplyFlow.builder(uvIndexAbility.db)
             .onlyIf { update: Update ->
                 Flag.CALLBACK_QUERY.test(update) && update.callbackQuery.data
                     .equals("unsubscribe", ignoreCase = true)
@@ -50,7 +50,7 @@ class SettingsAbility(
     }
 
     fun subscribeFlow(): ReplyFlow {
-        return ReplyFlow.builder(uvIndexAbility.dB)
+        return ReplyFlow.builder(uvIndexAbility.db)
             .onlyIf { update: Update ->
                 Flag.CALLBACK_QUERY.test(update) && update.callbackQuery.data
                     .equals("subscribe", ignoreCase = true)
@@ -84,7 +84,7 @@ class SettingsAbility(
     }
 
     fun sendSettingsAndHelp(): ReplyFlow {
-        return ReplyFlow.builder(uvIndexAbility.dB)
+        return ReplyFlow.builder(uvIndexAbility.db)
             .onlyIf { update: Update ->
                 Flag.TEXT.test(update) && (update.message.text
                     .contains(UvIndexAbility.SETTINGS_TEXT))
@@ -148,7 +148,7 @@ class SettingsAbility(
     }
 
     fun cannotSendLocation(): ReplyFlow {
-        return ReplyFlow.builder(uvIndexAbility.dB)
+        return ReplyFlow.builder(uvIndexAbility.db)
             .onlyIf { update: Update ->
                 Flag.CALLBACK_QUERY.test(update) && update.callbackQuery.data
                     .equals("cannot_send_location", ignoreCase = true)
@@ -162,7 +162,7 @@ class SettingsAbility(
     }
 
     fun langMenuCallback(): ReplyFlow {
-        return ReplyFlow.builder(uvIndexAbility.dB)
+        return ReplyFlow.builder(uvIndexAbility.db)
             .onlyIf { update: Update ->
                 Flag.CALLBACK_QUERY.test(update)
                         && update.callbackQuery.data.equals("lang_menu", ignoreCase = true)
@@ -179,7 +179,7 @@ class SettingsAbility(
     }
 
     fun langSelectEnCallback(): ReplyFlow {
-        return ReplyFlow.builder(uvIndexAbility.dB)
+        return ReplyFlow.builder(uvIndexAbility.db)
             .onlyIf { update: Update ->
                 Flag.CALLBACK_QUERY.test(update) && update.callbackQuery.data
                     .equals("lang_en", ignoreCase = true)
@@ -197,7 +197,7 @@ class SettingsAbility(
     }
 
     fun langSelectRuCallback(): ReplyFlow {
-        return ReplyFlow.builder(uvIndexAbility.dB)
+        return ReplyFlow.builder(uvIndexAbility.db)
             .onlyIf { update: Update ->
                 Flag.CALLBACK_QUERY.test(update) && update.callbackQuery.data
                     .equals("lang_ru", ignoreCase = true)

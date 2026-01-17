@@ -32,7 +32,7 @@ class AdminService(
                 Name: ${userEntity.name ?: "no name"} (id: ${userEntity.chatId})
                 Location: ${locationEntity.name ?: "unknown"}
                 """
-            uvIndexAbility.getSilent()?.send(msg, adminChatId())
+            uvIndexAbility.getSilent().send(msg, adminChatId())
         } catch (e: Exception) {
             Sentry.captureException(e)
         }
@@ -48,7 +48,7 @@ class AdminService(
                 Name: ${userEntity.name ?: "no name"} (id: ${userEntity.chatId})
                 Location: ${locationEntity.name ?: "unknown"}
                 """
-            uvIndexAbility.getSilent()?.send(msg, adminChatId())
+            uvIndexAbility.getSilent().send(msg, adminChatId())
         } catch (e: Exception) {
             Sentry.captureException(e)
         }
@@ -67,7 +67,7 @@ class AdminService(
                 - List of users: $usernamesList
                 
                 """
-            uvIndexAbility.getSilent()?.send(msg, adminChatId())
+            uvIndexAbility.getSilent().send(msg, adminChatId())
         } catch (e: Exception) {
             Sentry.captureException(e)
         }
